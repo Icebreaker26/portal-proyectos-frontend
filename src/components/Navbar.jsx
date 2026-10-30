@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const linkClase = ({ isActive }) =>
@@ -35,9 +35,11 @@ const EnlacesNav = ({ onNavigate }) => {
         <button
           type="button"
           onClick={cerrarSesion}
-          className="text-sm font-medium text-slate-600 transition-colors hover:text-ucp-granate"
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+          className="text-slate-600 transition-colors hover:text-ucp-granate"
         >
-          Cerrar sesión
+          <LogOut size={18} />
         </button>
       ) : (
         <NavLink to="/login" className={linkClase} onClick={onNavigate}>
