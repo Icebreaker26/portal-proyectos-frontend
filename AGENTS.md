@@ -10,49 +10,68 @@ SPA (React 18 + Vite) del Portal de Proyectos UCP. Consume la API del repo
 [`portal-proyectos-backend`](https://github.com/Icebreaker26/portal-proyectos-backend)
 (repo separado — clónalo aparte si necesitas correr el stack completo).
 
-## Estado actual (ver también los issues del milestone "Fase 1")
+## Estado actual (última actualización: 2026-10-30)
 
-**Verificado funcionando** (`npm install`, `npm run dev`, `docker compose up -d --build`, probado en
-navegador real contra el backend levantado en local): `apiService.js`, `AuthContext` +
-`ProtectedRoute`/`PublicOnlyRoute`/`AdminRoute`, páginas `Landing`/`Login`/`Registro`/`NotFound`, y
-el flujo completo registro → sesión → `/proyectos`.
+**Verificado funcionando end-to-end** (`npm install`, `npm run dev`, `docker compose up -d
+--build`, probado en navegador real contra el backend levantado en local):
 
-**Identidad visual definida y aplicada** (ADR 0007 en el repo backend): navbar con franja
-institucional segmentada (granate/verde/dorado), layout centrado, paleta UCP en
-`tailwind.config.js` (`ucp.granate`/`ucp.verde`/`ucp.dorado`/`ucp.rojo`), tablas `shadow-sm` +
-`thead bg-slate-50`, animaciones Framer Motion discretas. Todo responsive (navbar colapsa a
-hamburguesa bajo `md`, tablas con `overflow-x-auto`).
+- `apiService.js`, `AuthContext` + `ProtectedRoute`/`PublicOnlyRoute`/`AdminRoute`.
+- **Identidad visual completa** (ADR 0007/0009 en el repo backend): navbar con franja
+  institucional segmentada, paleta UCP en `tailwind.config.js`
+  (`ucp.granate`/`ucp.verde`/`ucp.dorado`/`ucp.rojo`), footer, botón de cerrar sesión como ícono.
+  `Landing`/`Login`/`Registro` con el kit visual (`AuthLayout.jsx`); `NotFound.jsx` tiene un Snake
+  jugable con score en vez de un 404 estático. **Pendiente de aplicar**: skeleton loaders
+  (ADR 0009) — hoy las vistas que cargan datos siguen mostrando `"Cargando…"` en texto plano,
+  queda para cuando se rediseñen.
+- **Flujo de proyectos con el modelo extendido** (ADR 0008 en el backend):
+  - `ListadoPublico.jsx` (`/proyectos/pub`, público): tarjetas con portada/resumen/stack, no tabla.
+  - `ListadoProyectos.jsx` (`/proyectos`, autenticado — **componente distinto** a `ListadoPublico`,
+    no los confundas): tabla simple, **sin acciones** — cada título enlaza al expediente.
+  - `ExpedienteProyecto.jsx` (`/proyectos/:id`, autenticado, consume el nuevo
+    `GET /api/proyectos/:id` del backend): detalle completo con participantes, archivos e
+    historial de revisiones. **Aprobar/rechazar vive solo aquí** — decisión explícita del autor:
+    un profesor no debe poder aprobar/rechazar desde una fila de tabla sin ver el expediente
+    completo primero. Al rechazar pide el motivo inline antes de confirmar.
+  - `NuevoProyecto.jsx` (`/proyectos/nuevo`): formulario completo (programa, asignatura, semestre,
+    tipo, resumen, cuerpo en Markdown, stack/palabras clave vía `TagInput.jsx`, repo, portada,
+    video, demo, visibilidad, licencia, participantes sin cuenta). Tras crear, ofrece subir
+    archivos (`ArchivosProyecto.jsx`).
+  - `DetalleProyecto.jsx` (`/proyectos/pub/:id`, **público**, distinto de `ExpedienteProyecto.jsx`):
+    cuerpo renderizado con `CuerpoMarkdown.jsx` (`marked` + `DOMPurify` — **nunca** quitar el
+    sanitizado, el cuerpo es Markdown de usuario), participantes, video de YouTube embebido,
+    archivos (descarga exige sesión), meta Open Graph. Solo muestra proyectos
+    aprobado+público — para ver cualquier otro (propio, pendiente, privado) la ruta autenticada es
+    `ExpedienteProyecto.jsx`.
+  - `VotoBoton.jsx` (`src/modules/votos/`): votar/retirar, "ya voté" optimista por sesión del
+    navegador (el backend no expone ese estado).
+  - `PanelUsuarios.jsx` (`/admin/usuarios`, admin-only): promueve/devuelve estudiante↔profesor.
 
-**Flujo de proyectos completo**: `ListadoPublico.jsx` (`/proyectos/pub`, público, con `VotoBoton`
-por fila) y `ListadoProyectos.jsx` (`/proyectos`, autenticado, `GET /api/proyectos` con las reglas
-de visibilidad del backend — ojo, es un componente distinto a `ListadoPublico`, no lo confundas).
-`NuevoProyecto.jsx` (`/proyectos/nuevo`) crea proyectos. `ListadoProyectos.jsx` también trae la
-columna de acciones Aprobar/Rechazar (`PUT /api/proyectos/:id/estado`), visible solo para
-profesor/admin. `VotoBoton.jsx` (`src/modules/votos/`) maneja votar/retirar voto — el "ya voté" es
-optimista por sesión del navegador, el backend no expone ese estado (ver comentario en el archivo).
-`PanelUsuarios.jsx` (`/admin/usuarios`, admin-only vía `AdminRoute`) promueve/devuelve estudiante↔
-profesor.
+**Huecos conocidos, dejados a propósito** (ver comentario en `NuevoProyecto.jsx`, el cierre de
+[frontend#14](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/14), y
+[backend#12](https://github.com/Icebreaker26/portal-proyectos-backend/issues/12)):
+- No hay selector de "profesor" al crear un proyecto, ni búsqueda de coautor por cuenta — no existe
+  un endpoint en el backend para listar profesores ni buscar usuarios por email sin ser admin. Los
+  participantes adicionales se agregan como `nombre_libre` (sin cuenta) por ahora.
+- No hay UI para que un participante con cuenta confirme su consentimiento de publicación (el
+  endpoint `PUT /api/proyectos/:id/consentimiento` existe en el backend, pero no hay forma de
+  saber desde el frontend "en qué proyectos debo confirmar" sin que `GET /api/proyectos` exponga
+  participantes).
 
-**Bugs reales encontrados y corregidos en esta sesión (no los reintroduzcas):**
+**Bugs reales encontrados y corregidos (no los reintroduzcas):**
 - El interceptor 401/403 de `apiService` redirigía a `/landing` también en un 403 (sesión válida,
-  falta un permiso puntual). Si `/landing` manda a un usuario autenticado de vuelta a una ruta que
-  le da 403 (`PublicOnlyRoute` hace esto), la recarga completa a `/landing` repite el ciclo — bucle
-  infinito reproducido en vivo (cientos de requests, rate limiter agotado). Ahora solo 401 fuerza el
-  redirect; un 403 lo maneja el componente que hizo la llamada.
+  falta un permiso puntual) → bucle infinito si `/landing` manda a un usuario autenticado de vuelta
+  a una ruta que le da 403 (`PublicOnlyRoute` hace esto). Ahora solo 401 fuerza el redirect.
 - `docker-compose.yml` no estaba en la misma red que el backend (proyectos Compose separados — ver
-  ADR 0001 en el backend), así que `nginx.conf` no podía resolver `backend:48500`. Se une a la red
-  real `portal-proyectos-backend_portal_net` (requiere que el backend esté levantado primero).
-- `nginx.conf` resolvía `backend` una sola vez al arrancar: si el backend no estaba listo en ese
-  instante, nginx moría con "host not found in upstream" y no se recuperaba solo. Ahora usa el
-  resolver embebido de Docker (127.0.0.11) + `proxy_pass` con variable para resolver en cada
-  petición — el frontend sigue arriba (502 en `/api`, 200 en el resto) aunque el backend esté caído,
-  y se recupera sin reiniciar en cuanto vuelve.
+  ADR 0001 en el backend); se une a `portal-proyectos-backend_portal_net` (requiere el backend
+  levantado primero).
+- `nginx.conf` resolvía `backend` una sola vez al arrancar y moría si no estaba listo; ahora usa el
+  resolver embebido de Docker (127.0.0.11) + `proxy_pass` con variable, se recupera solo.
 
 **Pendiente:**
 1. Deploy en Railway (issue #10) — no iniciado, en pausa (ver AGENTS.md del backend).
-2. `tests/integration/auth.test.js` equivalente en el backend ya existe; este repo no tiene tests
-   automatizados propios todavía (no hay issue abierto para esto — considerar si hace falta antes de
-   crecer más el frontend).
+2. Este repo no tiene tests automatizados propios todavía (el backend sí, `npm test` ahí). No hay
+   issue abierto para esto — considerar si hace falta antes de crecer más el frontend.
+3. Skeleton loaders (ver arriba) cuando se rediseñen las vistas existentes.
 
 Cada issue abierto trae un comentario indicando qué parte de su alcance está hecha y qué falta.
 
