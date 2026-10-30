@@ -13,7 +13,13 @@ apiService.interceptors.response.use(
     // normal de un visitante sin cuenta, no una sesión expirada — no debe forzar redirect
     // (si lo hiciera, en /landing o /login se entra en bucle de recargas).
     const esChequeoDeSesion = err.config?.url?.includes('/auth/me');
-    if (!esChequeoDeSesion && [401, 403].includes(err.response?.status)) {
+
+    // Solo 401 (sesión inválida/expirada) fuerza logout. Un 403 significa que la sesión
+    // ES válida pero falta un permiso puntual — redirigir a /landing ahí es un bug real:
+    // si /landing manda a un usuario autenticado de vuelta a una ruta que le da 403
+    // (PublicOnlyRoute hace esto), la recarga completa vuelve a /landing y el ciclo se
+    // repite sin parar. Un 403 lo maneja el componente que hizo la llamada, no aquí.
+    if (!esChequeoDeSesion && err.response?.status === 401) {
       window.location.href = '/landing';
     }
     return Promise.reject(err);
