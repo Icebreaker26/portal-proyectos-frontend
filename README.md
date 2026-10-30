@@ -32,4 +32,8 @@ npm run dev   # http://localhost:58173
 
 ## Documentación de ingeniería
 
-Documentación de requisitos, diseño, pruebas y ADRs vive en el repo [`portal-proyectos-backend`](../portal-proyectos-backend) (`docs/`), por ser el punto único de verdad del proyecto.
+Documentación de requisitos, diseño, pruebas y ADRs vive en el repo [`portal-proyectos-backend`](https://github.com/Icebreaker26/portal-proyectos-backend/tree/develop/docs) (`docs/`), por ser el punto único de verdad del proyecto.
+
+## Para un agente/colaborador nuevo
+
+Antes de tocar código, lee [`AGENTS.md`](AGENTS.md) (convenciones de este repo) y los [issues abiertos del milestone Fase 1](https://github.com/Icebreaker26/portal-proyectos-frontend/milestones) para ver qué falta.
