@@ -12,30 +12,47 @@ SPA (React 18 + Vite) del Portal de Proyectos UCP. Consume la API del repo
 
 ## Estado actual (ver también los issues del milestone "Fase 1")
 
-**Verificado funcionando** (`npm install`, `npm run dev`, probado en navegador real contra el backend
-levantado en local): `apiService.js`, `AuthContext` + `ProtectedRoute`/`PublicOnlyRoute`, páginas
-`Landing`/`Login`/`Registro`/`NotFound`, y el flujo completo registro → sesión → `/proyectos`.
-`ListadoPublico.jsx` consume `/api/proyectos/pub` y renderiza, pero **sin estilos** (ver más abajo).
+**Verificado funcionando** (`npm install`, `npm run dev`, `docker compose up -d --build`, probado en
+navegador real contra el backend levantado en local): `apiService.js`, `AuthContext` +
+`ProtectedRoute`/`PublicOnlyRoute`/`AdminRoute`, páginas `Landing`/`Login`/`Registro`/`NotFound`, y
+el flujo completo registro → sesión → `/proyectos`.
 
-**Bug ya corregido** (no lo reintroduzcas): el interceptor 401/403 de `apiService` redirigía a
-`/landing` incluso cuando `/auth/me` devuelve 401 por ser un visitante normal sin sesión, causando un
-bucle infinito de recargas en `/landing`/`/login`. La condición `esChequeoDeSesion` en
-`apiService.js` existe para evitar exactamente eso — no la quites sin entender por qué está.
+**Identidad visual definida y aplicada** (ADR 0007 en el repo backend): navbar con franja
+institucional segmentada (granate/verde/dorado), layout centrado, paleta UCP en
+`tailwind.config.js` (`ucp.granate`/`ucp.verde`/`ucp.dorado`/`ucp.rojo`), tablas `shadow-sm` +
+`thead bg-slate-50`, animaciones Framer Motion discretas. Todo responsive (navbar colapsa a
+hamburguesa bajo `md`, tablas con `overflow-x-auto`).
 
-**No verificado / pendiente — empieza aquí:**
-1. **Panel estudiante: formulario para crear proyecto** — el backend ya expone `POST /api/proyectos`
-   y funciona (probado por curl), pero no hay ningún formulario en el frontend todavía. Es el hueco
-   más grande del flujo completo ahora mismo.
-2. **Panel profesor: aprobar/rechazar** — backend expone `PUT /api/proyectos/:id/estado` protegido
-   con la acción `APROBAR`; falta la UI.
-3. **UI de votos** — backend listo (`/api/votos`), sin UI.
-4. **`docker compose up` del servicio `frontend`** — nunca se construyó la imagen (build Vite + nginx),
-   solo se probó `npm run dev`.
-5. **Layout/Navbar del módulo proyectos** — no existe, `ListadoPublico.jsx` se renderiza sin ningún
-   layout propio.
-6. **Identidad visual** (issue "Definir estética/identidad visual del proyecto") — **no se usa ningún
-   estilo heredado de otro proyecto**, este repo define el suyo desde cero. Bloquea que los paneles
-   de arriba se vean terminados, pero no bloquea construirlos funcionalmente primero.
+**Flujo de proyectos completo**: `ListadoPublico.jsx` (`/proyectos/pub`, público, con `VotoBoton`
+por fila) y `ListadoProyectos.jsx` (`/proyectos`, autenticado, `GET /api/proyectos` con las reglas
+de visibilidad del backend — ojo, es un componente distinto a `ListadoPublico`, no lo confundas).
+`NuevoProyecto.jsx` (`/proyectos/nuevo`) crea proyectos. `ListadoProyectos.jsx` también trae la
+columna de acciones Aprobar/Rechazar (`PUT /api/proyectos/:id/estado`), visible solo para
+profesor/admin. `VotoBoton.jsx` (`src/modules/votos/`) maneja votar/retirar voto — el "ya voté" es
+optimista por sesión del navegador, el backend no expone ese estado (ver comentario en el archivo).
+`PanelUsuarios.jsx` (`/admin/usuarios`, admin-only vía `AdminRoute`) promueve/devuelve estudiante↔
+profesor.
+
+**Bugs reales encontrados y corregidos en esta sesión (no los reintroduzcas):**
+- El interceptor 401/403 de `apiService` redirigía a `/landing` también en un 403 (sesión válida,
+  falta un permiso puntual). Si `/landing` manda a un usuario autenticado de vuelta a una ruta que
+  le da 403 (`PublicOnlyRoute` hace esto), la recarga completa a `/landing` repite el ciclo — bucle
+  infinito reproducido en vivo (cientos de requests, rate limiter agotado). Ahora solo 401 fuerza el
+  redirect; un 403 lo maneja el componente que hizo la llamada.
+- `docker-compose.yml` no estaba en la misma red que el backend (proyectos Compose separados — ver
+  ADR 0001 en el backend), así que `nginx.conf` no podía resolver `backend:48500`. Se une a la red
+  real `portal-proyectos-backend_portal_net` (requiere que el backend esté levantado primero).
+- `nginx.conf` resolvía `backend` una sola vez al arrancar: si el backend no estaba listo en ese
+  instante, nginx moría con "host not found in upstream" y no se recuperaba solo. Ahora usa el
+  resolver embebido de Docker (127.0.0.11) + `proxy_pass` con variable para resolver en cada
+  petición — el frontend sigue arriba (502 en `/api`, 200 en el resto) aunque el backend esté caído,
+  y se recupera sin reiniciar en cuanto vuelve.
+
+**Pendiente:**
+1. Deploy en Railway (issue #10) — no iniciado, en pausa (ver AGENTS.md del backend).
+2. `tests/integration/auth.test.js` equivalente en el backend ya existe; este repo no tiene tests
+   automatizados propios todavía (no hay issue abierto para esto — considerar si hace falta antes de
+   crecer más el frontend).
 
 Cada issue abierto trae un comentario indicando qué parte de su alcance está hecha y qué falta.
 
