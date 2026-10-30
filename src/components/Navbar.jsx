@@ -26,6 +26,11 @@ const EnlacesNav = ({ onNavigate }) => {
           Nuevo proyecto
         </NavLink>
       )}
+      {usuario?.rol === 'admin' && (
+        <NavLink to="/admin/usuarios" className={linkClase} onClick={onNavigate}>
+          Usuarios
+        </NavLink>
+      )}
       {usuario ? (
         <button
           type="button"

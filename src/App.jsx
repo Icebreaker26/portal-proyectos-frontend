@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { PublicOnlyRoute } from './components/PublicOnlyRoute.jsx';
+import { AdminRoute } from './components/AdminRoute.jsx';
 import Layout from './components/Layout.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
@@ -9,6 +10,7 @@ import NotFound from './pages/NotFound.jsx';
 import ListadoPublico from './modules/proyectos/pages/ListadoPublico.jsx';
 import ListadoProyectos from './modules/proyectos/pages/ListadoProyectos.jsx';
 import NuevoProyecto from './modules/proyectos/pages/NuevoProyecto.jsx';
+import PanelUsuarios from './modules/usuarios/pages/PanelUsuarios.jsx';
 
 export default function App() {
   return (
@@ -44,6 +46,19 @@ export default function App() {
             <Layout>
               <NuevoProyecto />
             </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/usuarios"
+        element={
+          <ProtectedRoute>
+            <AdminRoute>
+              <Layout>
+                <PanelUsuarios />
+              </Layout>
+            </AdminRoute>
           </ProtectedRoute>
         }
       />
