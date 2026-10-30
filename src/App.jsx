@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { PublicOnlyRoute } from './components/PublicOnlyRoute.jsx';
+import Layout from './components/Layout.jsx';
 import Landing from './pages/Landing.jsx';
 import Login from './pages/Login.jsx';
 import Registro from './pages/Registro.jsx';
@@ -13,13 +14,23 @@ export default function App() {
       <Route path="/landing" element={<PublicOnlyRoute><Landing /></PublicOnlyRoute>} />
       <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
       <Route path="/registro" element={<PublicOnlyRoute><Registro /></PublicOnlyRoute>} />
-      <Route path="/proyectos/pub" element={<ListadoPublico />} />
+
+      <Route
+        path="/proyectos/pub"
+        element={
+          <Layout>
+            <ListadoPublico />
+          </Layout>
+        }
+      />
 
       <Route
         path="/proyectos"
         element={
           <ProtectedRoute>
-            <ListadoPublico />
+            <Layout>
+              <ListadoPublico />
+            </Layout>
           </ProtectedRoute>
         }
       />
