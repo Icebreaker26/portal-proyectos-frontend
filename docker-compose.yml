@@ -1,5 +1,18 @@
+name: portal-proyectos-frontend
+
 services:
   frontend:
     build: .
     ports:
       - "39080:80"
+    networks:
+      - portal_net
+
+networks:
+  # Red real creada por docker-compose.yml del backend (proyecto Compose separado,
+  # ver ADR 0001 en ese repo). nginx.conf hace proxy_pass a http://backend:48500,
+  # que solo resuelve si el frontend se une a esa misma red — el backend debe estar
+  # levantado primero (docker compose up -d en el repo backend).
+  portal_net:
+    name: portal-proyectos-backend_portal_net
+    external: true
