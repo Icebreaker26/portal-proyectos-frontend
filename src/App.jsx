@@ -8,6 +8,7 @@ import Login from './pages/Login.jsx';
 import Registro from './pages/Registro.jsx';
 import NotFound from './pages/NotFound.jsx';
 import ListadoPublico from './modules/proyectos/pages/ListadoPublico.jsx';
+import DetalleProyecto from './modules/proyectos/pages/DetalleProyecto.jsx';
 import ListadoProyectos from './modules/proyectos/pages/ListadoProyectos.jsx';
 import NuevoProyecto from './modules/proyectos/pages/NuevoProyecto.jsx';
 import PanelUsuarios from './modules/usuarios/pages/PanelUsuarios.jsx';
@@ -24,6 +25,15 @@ export default function App() {
         element={
           <Layout>
             <ListadoPublico />
+          </Layout>
+        }
+      />
+
+      <Route
+        path="/proyectos/pub/:id"
+        element={
+          <Layout>
+            <DetalleProyecto />
           </Layout>
         }
       />

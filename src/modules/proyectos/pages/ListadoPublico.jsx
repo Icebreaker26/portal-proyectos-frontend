@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import apiService from '../../../services/apiService.js';
 import VotoBoton from '../../votos/components/VotoBoton.jsx';
@@ -40,7 +41,11 @@ export default function ListadoPublico() {
               <tbody>
                 {proyectos.map((p) => (
                   <tr key={p.id} className="border-t border-slate-100 hover:bg-slate-50">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-800">{p.titulo}</td>
+                    <td className="px-4 py-3 text-sm font-medium">
+                      <Link to={`/proyectos/pub/${p.id}`} className="text-slate-800 hover:text-ucp-verde hover:underline">
+                        {p.titulo}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-sm text-slate-600">{p.descripcion}</td>
                     <td className="px-4 py-3 text-sm">
                       {p.repositorio_url ? (
@@ -57,7 +62,7 @@ export default function ListadoPublico() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <VotoBoton proyectoId={p.id} />
+                      <VotoBoton proyectoId={p.id} conteoInicial={p.votos} />
                     </td>
                   </tr>
                 ))}

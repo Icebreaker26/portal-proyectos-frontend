@@ -10,15 +10,18 @@ import { useAuth } from '../../../context/AuthContext.jsx';
 // votosService.js). Por eso "votado" es solo estado optimista de esta sesión del
 // navegador: no persiste entre recargas, pero votar/retirar siempre queda correcto
 // en el servidor porque las dos operaciones son idempotentes.
-export default function VotoBoton({ proyectoId }) {
+// conteoInicial: si quien renderiza ya trae el conteo (el listado de proyectos lo
+// incluye desde el backend, ver proyectosService.js), se evita un GET extra por fila.
+export default function VotoBoton({ proyectoId, conteoInicial }) {
   const { usuario } = useAuth();
-  const [conteo, setConteo] = useState(null);
+  const [conteo, setConteo] = useState(conteoInicial ?? null);
   const [votado, setVotado] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
+    if (conteoInicial !== undefined) return;
     apiService.get(`/votos/pub/${proyectoId}/conteo`).then(({ data }) => setConteo(data.total));
-  }, [proyectoId]);
+  }, [proyectoId, conteoInicial]);
 
   const alternarVoto = async () => {
     setEnviando(true);
