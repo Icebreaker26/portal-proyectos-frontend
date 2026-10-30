@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import apiService from '../../../services/apiService.js';
+import VotoBoton from '../../votos/components/VotoBoton.jsx';
 
 export default function ListadoPublico() {
   const [proyectos, setProyectos] = useState([]);
@@ -27,12 +28,13 @@ export default function ListadoPublico() {
       ) : (
         <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[480px] text-left">
+            <table className="w-full min-w-[560px] text-left">
               <thead className="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500">
                 <tr>
                   <th className="px-4 py-3">Título</th>
                   <th className="px-4 py-3">Descripción</th>
                   <th className="px-4 py-3">Repositorio</th>
+                  <th className="px-4 py-3">Votos</th>
                 </tr>
               </thead>
               <tbody>
@@ -53,6 +55,9 @@ export default function ListadoPublico() {
                       ) : (
                         <span className="text-slate-400">—</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <VotoBoton proyectoId={p.id} />
                     </td>
                   </tr>
                 ))}
