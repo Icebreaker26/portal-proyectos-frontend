@@ -10,6 +10,7 @@ import NotFound from './pages/NotFound.jsx';
 import ListadoPublico from './modules/proyectos/pages/ListadoPublico.jsx';
 import DetalleProyecto from './modules/proyectos/pages/DetalleProyecto.jsx';
 import ListadoProyectos from './modules/proyectos/pages/ListadoProyectos.jsx';
+import ExpedienteProyecto from './modules/proyectos/pages/ExpedienteProyecto.jsx';
 import NuevoProyecto from './modules/proyectos/pages/NuevoProyecto.jsx';
 import PanelUsuarios from './modules/usuarios/pages/PanelUsuarios.jsx';
 
@@ -55,6 +56,17 @@ export default function App() {
           <ProtectedRoute>
             <Layout>
               <NuevoProyecto />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/proyectos/:id"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ExpedienteProyecto />
             </Layout>
           </ProtectedRoute>
         }
