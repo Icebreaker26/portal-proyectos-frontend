@@ -11,15 +11,19 @@ React 18 + Vite · Docker + nginx (producción)
 
 | Modo | Puerto |
 |---|---|
-| Vite dev server | `58173` |
-| nginx (build de producción) | `58080` |
+| Vite dev server | `39173` |
+| nginx (build de producción) | `39080` |
+
+> `58xxx` se descartó: Windows/Hyper-V reserva dinámicamente rangos de puertos (`netsh interface ipv4
+> show excludedportrange protocol=tcp`) que en esta máquina cubrían justo `58065–58264`. Si `39xxx`
+> vuelve a chocar en otra máquina, revisa esos rangos antes de elegir un reemplazo.
 
 ## Levantar en local
 
 ```bash
 cp .env.example .env
 npm install
-npm run dev   # http://localhost:58173
+npm run dev   # http://localhost:39173
 ```
 
 ## Flujo de trabajo (Git flow)

@@ -51,8 +51,9 @@ Cada issue abierto trae un comentario indicando qué parte de su alcance está h
 
 ## Puertos (no genéricos — ver ADR 0004 en el repo backend)
 
-Vite dev server `58173`, nginx (build de producción) `58080`. Si vuelven a chocar en otra máquina,
-ajusta `.env` y `docker-compose.yml`.
+Vite dev server `39173`, nginx (build de producción) `39080`. Si vuelven a chocar en otra máquina,
+revisa primero `netsh interface ipv4 show excludedportrange protocol=tcp` (en Windows, Hyper-V
+reserva rangos dinámicos que pueden tapar un puerto "libre" con `EACCES`) antes de elegir otro.
 
 ## Dónde mirar antes de preguntar
 
