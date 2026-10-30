@@ -1,15 +1,16 @@
 import { Link } from 'react-router-dom';
+import Footer from '../components/Footer.jsx';
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-[#F7F8FA]">
+    <div className="flex min-h-screen flex-col bg-[#F7F8FA]">
       <div className="flex h-1" aria-hidden="true">
         <div className="flex-1 bg-ucp-granate" />
         <div className="flex-1 bg-ucp-verde" />
         <div className="flex-1 bg-ucp-dorado" />
       </div>
 
-      <div className="mx-auto flex min-h-[calc(100vh-4px)] max-w-2xl flex-col items-center justify-center px-4 py-12 text-center">
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-4 py-12 text-center">
         <h1 className="text-3xl font-semibold text-slate-800">
           Portal de Proyectos <span className="text-ucp-granate">UCP</span>
         </h1>
@@ -36,6 +37,8 @@ export default function Landing() {
           Ver proyectos públicos
         </Link>
       </div>
+
+      <Footer />
     </div>
   );
 }
