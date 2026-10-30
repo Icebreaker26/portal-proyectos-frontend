@@ -12,20 +12,30 @@ SPA (React 18 + Vite) del Portal de Proyectos UCP. Consume la API del repo
 
 ## Estado actual (ver también los issues del milestone "Fase 1")
 
-El scaffolding base **ya existe** en `develop`:
-- `apiService.js` (Axios configurado).
-- `AuthContext` + `ProtectedRoute`/`PublicOnlyRoute`.
-- Páginas globales mínimas: `Landing`, `Login`, `Registro` (restringido a `@ucp.edu.co`, ver ADR 0006
-  en el repo backend), `NotFound`.
-- Módulo `proyectos`: solo `ListadoPublico.jsx`, funcional pero **sin estilos** (ver más abajo).
-- `Dockerfile` + `nginx.conf` + `docker-compose.yml`.
+**Verificado funcionando** (`npm install`, `npm run dev`, probado en navegador real contra el backend
+levantado en local): `apiService.js`, `AuthContext` + `ProtectedRoute`/`PublicOnlyRoute`, páginas
+`Landing`/`Login`/`Registro`/`NotFound`, y el flujo completo registro → sesión → `/proyectos`.
+`ListadoPublico.jsx` consume `/api/proyectos/pub` y renderiza, pero **sin estilos** (ver más abajo).
 
-**No se ha corrido** `npm install` ni `npm run dev`/`build` todavía — nadie ha verificado que la app
-levante de punta a punta. Verifícalo antes de asumir que algo "ya funciona".
+**Bug ya corregido** (no lo reintroduzcas): el interceptor 401/403 de `apiService` redirigía a
+`/landing` incluso cuando `/auth/me` devuelve 401 por ser un visitante normal sin sesión, causando un
+bucle infinito de recargas en `/landing`/`/login`. La condición `esChequeoDeSesion` en
+`apiService.js` existe para evitar exactamente eso — no la quites sin entender por qué está.
 
-Faltan por completo: panel estudiante (subir proyecto), panel profesor (aprobar/rechazar), UI de
-votos, y la identidad visual del proyecto (ver issue "Definir estética/identidad visual del proyecto"
-— **no se usa ningún estilo heredado de otro proyecto**, este repo define el suyo desde cero).
+**No verificado / pendiente — empieza aquí:**
+1. **Panel estudiante: formulario para crear proyecto** — el backend ya expone `POST /api/proyectos`
+   y funciona (probado por curl), pero no hay ningún formulario en el frontend todavía. Es el hueco
+   más grande del flujo completo ahora mismo.
+2. **Panel profesor: aprobar/rechazar** — backend expone `PUT /api/proyectos/:id/estado` protegido
+   con la acción `APROBAR`; falta la UI.
+3. **UI de votos** — backend listo (`/api/votos`), sin UI.
+4. **`docker compose up` del servicio `frontend`** — nunca se construyó la imagen (build Vite + nginx),
+   solo se probó `npm run dev`.
+5. **Layout/Navbar del módulo proyectos** — no existe, `ListadoPublico.jsx` se renderiza sin ningún
+   layout propio.
+6. **Identidad visual** (issue "Definir estética/identidad visual del proyecto") — **no se usa ningún
+   estilo heredado de otro proyecto**, este repo define el suyo desde cero. Bloquea que los paneles
+   de arriba se vean terminados, pero no bloquea construirlos funcionalmente primero.
 
 Cada issue abierto trae un comentario indicando qué parte de su alcance está hecha y qué falta.
 
