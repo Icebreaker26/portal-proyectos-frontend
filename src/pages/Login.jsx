@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -25,6 +25,7 @@ export default function Login() {
       <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
       <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" required />
       <button type="submit">Entrar</button>
+      <Link to="/registro">Crear cuenta</Link>
     </form>
   );
 }

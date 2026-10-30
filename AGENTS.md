@@ -15,7 +15,8 @@ SPA (React 18 + Vite) del Portal de Proyectos UCP. Consume la API del repo
 El scaffolding base **ya existe** en `develop`:
 - `apiService.js` (Axios configurado).
 - `AuthContext` + `ProtectedRoute`/`PublicOnlyRoute`.
-- Páginas globales mínimas: `Landing`, `Login`, `NotFound`.
+- Páginas globales mínimas: `Landing`, `Login`, `Registro` (restringido a `@ucp.edu.co`, ver ADR 0006
+  en el repo backend), `NotFound`.
 - Módulo `proyectos`: solo `ListadoPublico.jsx`, funcional pero **sin estilos** (ver más abajo).
 - `Dockerfile` + `nginx.conf` + `docker-compose.yml`.
 
