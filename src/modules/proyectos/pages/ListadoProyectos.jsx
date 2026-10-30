@@ -1,15 +1,26 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Check, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 import apiService from '../../../services/apiService.js';
+import { useAuth } from '../../../context/AuthContext.jsx';
 import EstadoBadge from '../components/EstadoBadge.jsx';
 
 // GET /api/proyectos (autenticado): visibilidad por rol — ver ADR correspondiente en el
 // backend (RF-04 del SRS). Quien puede aprobar ve todos; el resto ve lo suyo + lo aprobado
 // de otros.
+//
+// Aprobar/rechazar (PUT /api/proyectos/:id/estado) exige el permiso APROBAR, que solo
+// profesor/admin reciben por defecto (permisosDefaultService.js en el backend). Un
+// estudiante nunca ve los botones, pero el backend es quien hace cumplir la regla —
+// este chequeo de rol es solo para no mostrar acciones que igual fallarían con 403.
+const PUEDE_APROBAR = (usuario) => usuario?.rol === 'profesor' || usuario?.rol === 'admin';
+
 export default function ListadoProyectos() {
+  const { usuario } = useAuth();
   const [proyectos, setProyectos] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [actualizando, setActualizando] = useState(null);
 
   useEffect(() => {
     apiService
@@ -17,6 +28,21 @@ export default function ListadoProyectos() {
       .then(({ data }) => setProyectos(data))
       .finally(() => setCargando(false));
   }, []);
+
+  const cambiarEstado = async (id, estado) => {
+    setActualizando(id);
+    try {
+      await apiService.put(`/proyectos/${id}/estado`, { estado });
+      setProyectos((prev) => prev.map((p) => (p.id === id ? { ...p, estado } : p)));
+      toast.success(estado === 'aprobado' ? 'Proyecto aprobado' : 'Proyecto rechazado');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'No se pudo actualizar el proyecto');
+    } finally {
+      setActualizando(null);
+    }
+  };
+
+  const puedeAprobar = PUEDE_APROBAR(usuario);
 
   return (
     <div>
@@ -40,13 +66,14 @@ export default function ListadoProyectos() {
       ) : (
         <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left">
+            <table className="w-full min-w-[680px] text-left">
               <thead className="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500">
                 <tr>
                   <th className="px-4 py-3">Título</th>
                   <th className="px-4 py-3">Descripción</th>
                   <th className="px-4 py-3">Estado</th>
                   <th className="px-4 py-3">Repositorio</th>
+                  {puedeAprobar && <th className="px-4 py-3">Acciones</th>}
                 </tr>
               </thead>
               <tbody>
@@ -71,6 +98,32 @@ export default function ListadoProyectos() {
                         <span className="text-slate-400">—</span>
                       )}
                     </td>
+                    {puedeAprobar && (
+                      <td className="px-4 py-3 text-sm">
+                        {p.estado === 'pendiente' ? (
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              disabled={actualizando === p.id}
+                              onClick={() => cambiarEstado(p.id, 'aprobado')}
+                              className="inline-flex items-center gap-1 rounded-lg bg-ucp-verde/10 px-2.5 py-1 text-xs font-medium text-ucp-verde transition-colors hover:bg-ucp-verde/20 disabled:opacity-60"
+                            >
+                              <Check size={14} /> Aprobar
+                            </button>
+                            <button
+                              type="button"
+                              disabled={actualizando === p.id}
+                              onClick={() => cambiarEstado(p.id, 'rechazado')}
+                              className="inline-flex items-center gap-1 rounded-lg bg-ucp-rojo/10 px-2.5 py-1 text-xs font-medium text-ucp-rojo transition-colors hover:bg-ucp-rojo/20 disabled:opacity-60"
+                            >
+                              <X size={14} /> Rechazar
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
