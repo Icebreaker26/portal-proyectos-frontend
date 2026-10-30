@@ -21,6 +21,11 @@ const EnlacesNav = ({ onNavigate }) => {
       <NavLink to="/proyectos/pub" className={linkClase} onClick={onNavigate}>
         Proyectos
       </NavLink>
+      {usuario && (
+        <NavLink to="/proyectos/nuevo" className={linkClase} onClick={onNavigate}>
+          Nuevo proyecto
+        </NavLink>
+      )}
       {usuario ? (
         <button
           type="button"

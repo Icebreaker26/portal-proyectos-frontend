@@ -7,6 +7,8 @@ import Login from './pages/Login.jsx';
 import Registro from './pages/Registro.jsx';
 import NotFound from './pages/NotFound.jsx';
 import ListadoPublico from './modules/proyectos/pages/ListadoPublico.jsx';
+import ListadoProyectos from './modules/proyectos/pages/ListadoProyectos.jsx';
+import NuevoProyecto from './modules/proyectos/pages/NuevoProyecto.jsx';
 
 export default function App() {
   return (
@@ -29,7 +31,18 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Layout>
-              <ListadoPublico />
+              <ListadoProyectos />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/proyectos/nuevo"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <NuevoProyecto />
             </Layout>
           </ProtectedRoute>
         }
