@@ -1,0 +1,35 @@
+# Portal de Proyectos UCP — Frontend
+
+SPA (React 18 + Vite) del Portal de Proyectos de la Universidad Católica de Pereira.
+Proyecto final de Cloud Computing — Alejandro Marín, Martin Salazar, Alejandro Jaramillo.
+
+## Stack
+
+React 18 + Vite · Docker + nginx (producción)
+
+## Puertos (no genéricos — la máquina de pruebas ya tiene ocupados los estándar)
+
+| Modo | Puerto |
+|---|---|
+| Vite dev server | `58173` |
+| nginx (build de producción) | `58080` |
+
+## Levantar en local
+
+```bash
+cp .env.example .env
+npm install
+npm run dev   # http://localhost:58173
+```
+
+## Flujo de trabajo (Git flow)
+
+- `main`: estable / releases.
+- `develop`: integración — rama por defecto para PRs.
+- `feature/<nombre>`: una por cada issue, contra `develop`.
+- Commits: Conventional Commits simple (`feat:`, `fix:`, `chore:`, `docs:`).
+- Sin protección de rama por ahora.
+
+## Documentación de ingeniería
+
+Documentación de requisitos, diseño, pruebas y ADRs vive en el repo [`portal-proyectos-backend`](../portal-proyectos-backend) (`docs/`), por ser el punto único de verdad del proyecto.
