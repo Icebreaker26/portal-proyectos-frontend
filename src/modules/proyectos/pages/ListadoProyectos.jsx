@@ -21,6 +21,8 @@ export default function ListadoProyectos() {
   const [proyectos, setProyectos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [actualizando, setActualizando] = useState(null);
+  const [rechazandoId, setRechazandoId] = useState(null);
+  const [comentario, setComentario] = useState('');
 
   useEffect(() => {
     apiService
@@ -29,12 +31,14 @@ export default function ListadoProyectos() {
       .finally(() => setCargando(false));
   }, []);
 
-  const cambiarEstado = async (id, estado) => {
+  const cambiarEstado = async (id, estado, comentarioEnvio) => {
     setActualizando(id);
     try {
-      await apiService.put(`/proyectos/${id}/estado`, { estado });
+      await apiService.put(`/proyectos/${id}/estado`, { estado, comentario: comentarioEnvio || undefined });
       setProyectos((prev) => prev.map((p) => (p.id === id ? { ...p, estado } : p)));
       toast.success(estado === 'aprobado' ? 'Proyecto aprobado' : 'Proyecto rechazado');
+      setRechazandoId(null);
+      setComentario('');
     } catch (err) {
       toast.error(err.response?.data?.error || 'No se pudo actualizar el proyecto');
     } finally {
@@ -79,8 +83,15 @@ export default function ListadoProyectos() {
               <tbody>
                 {proyectos.map((p) => (
                   <tr key={p.id} className="border-t border-slate-100 hover:bg-slate-50">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-800">{p.titulo}</td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{p.descripcion}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-slate-800">
+                      {p.titulo}
+                      {(p.programa || p.tipo_proyecto) && (
+                        <p className="mt-0.5 text-xs font-normal text-slate-400">
+                          {[p.programa, p.tipo_proyecto].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600">{p.resumen || p.descripcion}</td>
                     <td className="px-4 py-3 text-sm">
                       <EstadoBadge estado={p.estado} />
                     </td>
@@ -100,7 +111,37 @@ export default function ListadoProyectos() {
                     </td>
                     {puedeAprobar && (
                       <td className="px-4 py-3 text-sm">
-                        {p.estado === 'pendiente' ? (
+                        {p.estado !== 'pendiente' ? (
+                          <span className="text-slate-400">—</span>
+                        ) : rechazandoId === p.id ? (
+                          <div className="flex min-w-[220px] flex-col gap-2">
+                            <textarea
+                              value={comentario}
+                              onChange={(e) => setComentario(e.target.value)}
+                              placeholder="Motivo del rechazo…"
+                              rows={2}
+                              autoFocus
+                              className="rounded-lg border border-slate-200 px-2 py-1 text-xs focus:border-ucp-rojo focus:outline-none focus:ring-1 focus:ring-ucp-rojo"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                disabled={actualizando === p.id}
+                                onClick={() => cambiarEstado(p.id, 'rechazado', comentario)}
+                                className="rounded-lg bg-ucp-rojo/10 px-2.5 py-1 text-xs font-medium text-ucp-rojo hover:bg-ucp-rojo/20 disabled:opacity-60"
+                              >
+                                Confirmar rechazo
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setRechazandoId(null); setComentario(''); }}
+                                className="rounded-lg px-2.5 py-1 text-xs text-slate-500 hover:bg-slate-100"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
                           <div className="flex gap-2">
                             <button
                               type="button"
@@ -113,14 +154,12 @@ export default function ListadoProyectos() {
                             <button
                               type="button"
                               disabled={actualizando === p.id}
-                              onClick={() => cambiarEstado(p.id, 'rechazado')}
+                              onClick={() => { setRechazandoId(p.id); setComentario(''); }}
                               className="inline-flex items-center gap-1 rounded-lg bg-ucp-rojo/10 px-2.5 py-1 text-xs font-medium text-ucp-rojo transition-colors hover:bg-ucp-rojo/20 disabled:opacity-60"
                             >
                               <X size={14} /> Rechazar
                             </button>
                           </div>
-                        ) : (
-                          <span className="text-slate-400">—</span>
                         )}
                       </td>
                     )}
