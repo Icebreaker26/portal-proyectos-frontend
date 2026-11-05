@@ -3,6 +3,7 @@ name: portal-proyectos-frontend
 services:
   frontend:
     build: .
+    restart: unless-stopped
     ports:
       - "39080:80"
     networks:
