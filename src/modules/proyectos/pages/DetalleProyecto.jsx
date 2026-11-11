@@ -17,6 +17,7 @@ import apiService from '../../../services/apiService.js';
 import { useAuth } from '../../../context/AuthContext.jsx';
 import VotoBoton from '../../votos/components/VotoBoton.jsx';
 import CuerpoMarkdown from '../components/CuerpoMarkdown.jsx';
+import BotonCompartir from '../components/BotonCompartir.jsx';
 import Skeleton from '../../../components/Skeleton.jsx';
 import { entrada } from '../../../components/Cascada.jsx';
 
@@ -222,6 +223,7 @@ export default function DetalleProyecto() {
 
             <div className="mt-6 flex items-center gap-4 border-t border-slate-100 pt-4">
               <VotoBoton proyectoId={proyecto.id} conteoInicial={proyecto.votos} />
+              <BotonCompartir titulo={proyecto.titulo} texto={proyecto.resumen || proyecto.descripcion} />
               {proyecto.repositorio_url && (
                 <a
                   href={proyecto.repositorio_url}
