@@ -19,10 +19,14 @@ SPA (React 18 + Vite) del Portal de Proyectos UCP. Consume la API del repo
 - **Identidad visual completa** (ADR 0007/0009 en el repo backend): navbar con franja
   institucional segmentada, paleta UCP en `tailwind.config.js`
   (`ucp.granate`/`ucp.verde`/`ucp.dorado`/`ucp.rojo`), footer, botón de cerrar sesión como ícono.
-  `Landing`/`Login`/`Registro` con el kit visual (`AuthLayout.jsx`); `NotFound.jsx` tiene un Snake
-  jugable con score en vez de un 404 estático. **Pendiente de aplicar**: skeleton loaders
-  (ADR 0009) — hoy las vistas que cargan datos siguen mostrando `"Cargando…"` en texto plano,
-  queda para cuando se rediseñen.
+  `Login`/`Registro` con el kit visual (`AuthLayout.jsx`); `NotFound.jsx` tiene un Snake jugable con
+  score en vez de un 404 estático. **`Landing.jsx` (2026-11-11) ya no es solo el kit base**: hero 3D
+  (`react-three-fiber`/`three.js`, `src/components/landing3d/`) puramente estético inspirado en el
+  póster académico del proyecto, sección propia con el diagrama 3D de la arquitectura (Docker/host/
+  red interna, fiel al póster), secciones HTML con animación en cascada (`framer-motion`),
+  Resultados/Referencias y créditos en el footer — ver issues #16/#20/#21/#22/#23 para extender ese
+  mismo nivel al resto de la app. **Pendiente de aplicar fuera de `/landing`**: skeleton loaders
+  (ADR 0009) — las demás vistas siguen mostrando `"Cargando…"` en texto plano (issue #15).
 - **Flujo de proyectos con el modelo extendido** (ADR 0008 en el backend):
   - `ListadoPublico.jsx` (`/proyectos/pub`, público): tarjetas con portada/resumen/stack, no tabla.
   - `ListadoProyectos.jsx` (`/proyectos`, autenticado — **componente distinto** a `ListadoPublico`,
@@ -46,16 +50,16 @@ SPA (React 18 + Vite) del Portal de Proyectos UCP. Consume la API del repo
     navegador (el backend no expone ese estado).
   - `PanelUsuarios.jsx` (`/admin/usuarios`, admin-only): promueve/devuelve estudiante↔profesor.
 
-**Huecos conocidos, dejados a propósito** (ver comentario en `NuevoProyecto.jsx`, el cierre de
-[frontend#14](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/14), y
-[backend#12](https://github.com/Icebreaker26/portal-proyectos-backend/issues/12)):
-- No hay selector de "profesor" al crear un proyecto, ni búsqueda de coautor por cuenta — no existe
-  un endpoint en el backend para listar profesores ni buscar usuarios por email sin ser admin. Los
-  participantes adicionales se agregan como `nombre_libre` (sin cuenta) por ahora.
-- No hay UI para que un participante con cuenta confirme su consentimiento de publicación (el
-  endpoint `PUT /api/proyectos/:id/consentimiento` existe en el backend, pero no hay forma de
-  saber desde el frontend "en qué proyectos debo confirmar" sin que `GET /api/proyectos` exponga
-  participantes).
+**Huecos conocidos** (backend#12 ya se resolvió del lado del backend — ver
+[portal-proyectos-backend#13](https://github.com/Icebreaker26/portal-proyectos-backend/pull/13) —,
+así que estos huecos ahora son solo de frontend; ver issues #17/#18 más abajo):
+- No hay selector de "profesor" al crear un proyecto, ni búsqueda de coautor por cuenta — el backend
+  ya expone `GET /api/usuarios/profesores` y `GET /api/usuarios/buscar?email=`, pero
+  `NuevoProyecto.jsx` todavía no los consume. Los participantes adicionales se siguen agregando como
+  `nombre_libre` (sin cuenta) por ahora (issue #17).
+- No hay UI para que un participante con cuenta confirme su consentimiento de publicación — el
+  endpoint `PUT /api/proyectos/:id/consentimiento` existe, y `GET /api/proyectos` ya expone
+  `requiere_mi_consentimiento` por fila, pero nada en el frontend lo usa todavía (issue #18).
 
 **Bugs reales encontrados y corregidos (no los reintroduzcas):**
 - El interceptor 401/403 de `apiService` redirigía a `/landing` también en un 403 (sesión válida,
@@ -67,11 +71,28 @@ SPA (React 18 + Vite) del Portal de Proyectos UCP. Consume la API del repo
 - `nginx.conf` resolvía `backend` una sola vez al arrancar y moría si no estaba listo; ahora usa el
   resolver embebido de Docker (127.0.0.11) + `proxy_pass` con variable, se recupera solo.
 
-**Pendiente:**
-1. Deploy en Railway (issue #10) — no iniciado, en pausa (ver AGENTS.md del backend).
-2. Este repo no tiene tests automatizados propios todavía (el backend sí, `npm test` ahí). No hay
+**Pendiente — empieza aquí (2026-11-11, backlog de rediseño + huecos funcionales):**
+1. **[Issue #15](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/15) — Fundamentos
+   de diseño v2**: prerequisito de los issues #16/#20/#21/#22/#23. Extrae a componentes compartidos
+   los patrones ya probados en `Landing.jsx` (animación en cascada, `Chip`/`Tarjeta`/`PuntoLista`) +
+   un `Skeleton` genérico real (cierra el ADR 0009 — hoy 5 vistas muestran `"Cargando…"` en texto
+   plano: `ListadoPublico.jsx`, `ListadoProyectos.jsx`, `DetalleProyecto.jsx`,
+   `ExpedienteProyecto.jsx`, `PanelUsuarios.jsx`).
+2. **[#16](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/16) Rediseño vitrina
+   pública** (listado + detalle), **[#17](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/17)
+   selector de profesor/coautor**, **[#18](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/18)
+   UI de consentimiento**, **[#19](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/19)
+   eliminar proyecto propio** — los cuatro desbloqueados por backend#12
+   ([backend PR #13](https://github.com/Icebreaker26/portal-proyectos-backend/pull/13), ya mergeado)
+   o por el propio rediseño.
+3. **[#20](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/20) Rediseño dashboard**
+   (listado autenticado + expediente), **[#21](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/21)
+   rediseño del formulario "Nuevo proyecto"**, **[#22](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/22)
+   rediseño Login/Registro/NotFound**, **[#23](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/23)
+   rediseño panel de administración de usuarios** — resto del rediseño visual, menor prioridad.
+4. Deploy en Railway (issue #10) — no iniciado, en pausa (ver AGENTS.md del backend).
+5. Este repo no tiene tests automatizados propios todavía (el backend sí, `npm test` ahí). No hay
    issue abierto para esto — considerar si hace falta antes de crecer más el frontend.
-3. Skeleton loaders (ver arriba) cuando se rediseñen las vistas existentes.
 
 Cada issue abierto trae un comentario indicando qué parte de su alcance está hecha y qué falta.
 
