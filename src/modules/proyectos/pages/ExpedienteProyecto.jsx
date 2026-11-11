@@ -24,6 +24,7 @@ import { useAuth } from '../../../context/AuthContext.jsx';
 import VotoBoton from '../../votos/components/VotoBoton.jsx';
 import CuerpoMarkdown from '../components/CuerpoMarkdown.jsx';
 import EstadoBadge from '../components/EstadoBadge.jsx';
+import BotonCompartir from '../components/BotonCompartir.jsx';
 import Skeleton from '../../../components/Skeleton.jsx';
 import { entrada } from '../../../components/Cascada.jsx';
 
@@ -319,6 +320,13 @@ export default function ExpedienteProyecto() {
 
             <div className="mt-6 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4">
               <VotoBoton proyectoId={proyecto.id} conteoInicial={proyecto.votos} />
+              {proyecto.estado === 'aprobado' && proyecto.visibilidad === 'publico' && (
+                <BotonCompartir
+                  titulo={proyecto.titulo}
+                  texto={proyecto.resumen || proyecto.descripcion}
+                  url={`${window.location.origin}/proyectos/pub/${proyecto.id}`}
+                />
+              )}
               {proyecto.repositorio_url && (
                 <a href={proyecto.repositorio_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-ucp-verde hover:underline">
                   Ver repositorio <ExternalLink size={14} />
