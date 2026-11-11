@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { PublicOnlyRoute } from './components/PublicOnlyRoute.jsx';
 import { AdminRoute } from './components/AdminRoute.jsx';
@@ -17,6 +17,7 @@ import PanelUsuarios from './modules/usuarios/pages/PanelUsuarios.jsx';
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/landing" replace />} />
       <Route path="/landing" element={<PublicOnlyRoute><Landing /></PublicOnlyRoute>} />
       <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
       <Route path="/registro" element={<PublicOnlyRoute><Registro /></PublicOnlyRoute>} />
