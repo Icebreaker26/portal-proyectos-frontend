@@ -26,6 +26,10 @@ import {
 } from 'lucide-react';
 import Footer from '../components/Footer.jsx';
 import FallbackEstatico from '../components/landing3d/FallbackEstatico.jsx';
+import Cascada, { entrada, item } from '../components/Cascada.jsx';
+import Chip from '../components/Chip.jsx';
+import Tarjeta from '../components/Tarjeta.jsx';
+import PuntoLista from '../components/PuntoLista.jsx';
 
 // Ambas cargan aparte (chunk de three.js + @react-three/fiber): no deben bloquear el primer
 // pintado de /landing ni descargarse en rutas que no la usan. `SeccionArquitectura` importa
@@ -33,24 +37,6 @@ import FallbackEstatico from '../components/landing3d/FallbackEstatico.jsx';
 // un import estático aquí mete three.js en el bundle principal de TODA la app, no solo /landing.
 const HeroEscena3D = lazy(() => import('../components/landing3d/HeroEscena3D.jsx'));
 const SeccionArquitectura = lazy(() => import('../components/landing3d/SeccionArquitectura.jsx'));
-
-const entrada = {
-  initial: { opacity: 0, y: 24 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-80px' },
-  transition: { duration: 0.5, ease: 'easeOut' },
-};
-
-// Contenedor + ítem para listas/grids que entran de a una pieza (no todo el bloque de golpe):
-// el hijo solo necesita `variants={item}` y hereda el estado "mostrar"/"oculto" del padre.
-const lista = {
-  oculto: {},
-  mostrar: { transition: { staggerChildren: 0.07 } },
-};
-const item = {
-  oculto: { opacity: 0, y: 10 },
-  mostrar: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
-};
 
 function Bloque({ numero, titulo, children }) {
   return (
@@ -96,52 +82,6 @@ function Referencia({ numero, titulo, fuente, href }) {
           <ExternalLink size={11} />
         </a>
       </div>
-    </motion.li>
-  );
-}
-
-// Grid/fila/lista que anima sus hijos en cascada al entrar en vista. `as` elige la etiqueta
-// (por defecto div; "ul" cuando los hijos son <motion.li>, para que siga siendo una lista real).
-function Cascada({ as = 'div', className, children }) {
-  const Etiqueta = motion[as];
-  return (
-    <Etiqueta variants={lista} initial="oculto" whileInView="mostrar" viewport={{ once: true, margin: '-60px' }} className={className}>
-      {children}
-    </Etiqueta>
-  );
-}
-
-function Chip({ icon: Icon, children }) {
-  return (
-    <motion.span
-      variants={item}
-      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600"
-    >
-      {Icon && <Icon size={13} className="text-slate-400" />}
-      {children}
-    </motion.span>
-  );
-}
-
-function Tarjeta({ icon: Icon, iconClassName, titulo, children }) {
-  return (
-    <motion.div variants={item} className="rounded-xl border border-slate-200 bg-white p-4">
-      {Icon && (
-        <div className={`mb-2 inline-flex rounded-lg p-1.5 ${iconClassName ?? 'bg-slate-100 text-slate-500'}`}>
-          <Icon size={16} />
-        </div>
-      )}
-      <p className="text-sm font-semibold text-slate-800">{titulo}</p>
-      <p className="mt-1 text-xs text-slate-500">{children}</p>
-    </motion.div>
-  );
-}
-
-function PuntoLista({ icon: Icon, children }) {
-  return (
-    <motion.li variants={item} className="flex items-start gap-2.5">
-      <Icon size={15} className="mt-0.5 shrink-0 text-ucp-verde" />
-      <span>{children}</span>
     </motion.li>
   );
 }

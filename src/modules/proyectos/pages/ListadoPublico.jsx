@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { ExternalLink, Image as ImageIcon, FolderOpen } from 'lucide-react';
 import apiService from '../../../services/apiService.js';
 import VotoBoton from '../../votos/components/VotoBoton.jsx';
+import Skeleton from '../../../components/Skeleton.jsx';
+import EmptyState from '../../../components/EmptyState.jsx';
 
 export default function ListadoPublico() {
   const [proyectos, setProyectos] = useState([]);
@@ -23,9 +25,21 @@ export default function ListadoPublico() {
       </p>
 
       {cargando ? (
-        <p className="mt-6 text-sm text-slate-500">Cargando…</p>
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <Skeleton className="h-36 w-full rounded-none" />
+              <div className="flex flex-col gap-2 p-4">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-5/6" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : proyectos.length === 0 ? (
-        <p className="mt-6 text-sm text-slate-500">Todavía no hay proyectos aprobados.</p>
+        <EmptyState icon={FolderOpen} titulo="Todavía no hay proyectos aprobados." />
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {proyectos.map((p) => (
