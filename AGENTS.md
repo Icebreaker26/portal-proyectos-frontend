@@ -10,6 +10,22 @@ SPA (React 18 + Vite) del Portal de Proyectos UCP. Consume la API del repo
 [`portal-proyectos-backend`](https://github.com/Icebreaker26/portal-proyectos-backend)
 (repo separado — clónalo aparte si necesitas correr el stack completo).
 
+## Componentes compartidos (`src/components/`, desde issue #15)
+
+Patrones de animación/UI extraídos de `Landing.jsx` para que los issues de rediseño (#16/#20/#21/
+#22/#23) los reutilicen en vez de reinventarlos:
+
+- `Cascada.jsx`: exporta `entrada` (fade+slide de una sección completa al entrar en vista),
+  `lista`/`item` (variantes de framer-motion para stagger) y el componente `Cascada` (contenedor
+  que anima a sus hijos en cascada; `as="ul"` cuando los hijos son `<motion.li>`).
+- `Chip.jsx`, `Tarjeta.jsx`, `PuntoLista.jsx`: hijos listos para usar dentro de `<Cascada>` (ya
+  llevan `variants={item}`).
+- `Skeleton.jsx`: placeholder de carga genérico (shimmer/pulse con Tailwind) — cierra el ADR 0009.
+  `className` define la forma (alto/ancho/rounded); compón varios para imitar el layout real
+  (grid de tarjetas, filas de tabla, bloque de detalle) como en `ListadoPublico.jsx` /
+  `ListadoProyectos.jsx` / `DetalleProyecto.jsx`.
+- `EmptyState.jsx`: estado vacío genérico (`icon` + `titulo` + texto opcional como children).
+
 ## Estado actual (última actualización: 2026-10-30)
 
 **Verificado funcionando end-to-end** (`npm install`, `npm run dev`, `docker compose up -d
@@ -25,8 +41,9 @@ SPA (React 18 + Vite) del Portal de Proyectos UCP. Consume la API del repo
   póster académico del proyecto, sección propia con el diagrama 3D de la arquitectura (Docker/host/
   red interna, fiel al póster), secciones HTML con animación en cascada (`framer-motion`),
   Resultados/Referencias y créditos en el footer — ver issues #16/#20/#21/#22/#23 para extender ese
-  mismo nivel al resto de la app. **Pendiente de aplicar fuera de `/landing`**: skeleton loaders
-  (ADR 0009) — las demás vistas siguen mostrando `"Cargando…"` en texto plano (issue #15).
+  mismo nivel al resto de la app. Patrones compartidos (`Cascada`/`Chip`/`Tarjeta`/`PuntoLista`/
+  `Skeleton`/`EmptyState`) extraídos a `src/components/` (issue #15) — ver sección arriba; las 5
+  vistas que mostraban `"Cargando…"` en texto plano ya usan `Skeleton` (cierra ADR 0009).
 - **Flujo de proyectos con el modelo extendido** (ADR 0008 en el backend):
   - `ListadoPublico.jsx` (`/proyectos/pub`, público): tarjetas con portada/resumen/stack, no tabla.
   - `ListadoProyectos.jsx` (`/proyectos`, autenticado — **componente distinto** a `ListadoPublico`,
@@ -72,12 +89,8 @@ así que estos huecos ahora son solo de frontend; ver issues #17/#18 más abajo)
   resolver embebido de Docker (127.0.0.11) + `proxy_pass` con variable, se recupera solo.
 
 **Pendiente — empieza aquí (2026-11-11, backlog de rediseño + huecos funcionales):**
-1. **[Issue #15](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/15) — Fundamentos
-   de diseño v2**: prerequisito de los issues #16/#20/#21/#22/#23. Extrae a componentes compartidos
-   los patrones ya probados en `Landing.jsx` (animación en cascada, `Chip`/`Tarjeta`/`PuntoLista`) +
-   un `Skeleton` genérico real (cierra el ADR 0009 — hoy 5 vistas muestran `"Cargando…"` en texto
-   plano: `ListadoPublico.jsx`, `ListadoProyectos.jsx`, `DetalleProyecto.jsx`,
-   `ExpedienteProyecto.jsx`, `PanelUsuarios.jsx`).
+1. ~~**[Issue #15](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/15) — Fundamentos
+   de diseño v2**~~ — resuelto: ver "Componentes compartidos" arriba.
 2. **[#16](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/16) Rediseño vitrina
    pública** (listado + detalle), **[#17](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/17)
    selector de profesor/coautor**, **[#18](https://github.com/Icebreaker26/portal-proyectos-frontend/issues/18)

@@ -7,6 +7,7 @@ import { useAuth } from '../../../context/AuthContext.jsx';
 import VotoBoton from '../../votos/components/VotoBoton.jsx';
 import CuerpoMarkdown from '../components/CuerpoMarkdown.jsx';
 import EstadoBadge from '../components/EstadoBadge.jsx';
+import Skeleton from '../../../components/Skeleton.jsx';
 
 const formatoFecha = (iso) =>
   new Date(iso).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -77,7 +78,16 @@ export default function ExpedienteProyecto() {
       </Link>
 
       {cargando ? (
-        <p className="mt-6 text-sm text-slate-500">Cargando…</p>
+        <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <Skeleton className="h-56 w-full rounded-none" />
+          <div className="flex flex-col gap-3 p-6">
+            <Skeleton className="h-5 w-2/3" />
+            <Skeleton className="h-3 w-1/2" />
+            <Skeleton className="mt-2 h-3 w-full" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-3/4" />
+          </div>
+        </div>
       ) : noEncontrado ? (
         <p className="mt-6 text-sm text-slate-500">Este proyecto no existe o no tienes acceso a él.</p>
       ) : (

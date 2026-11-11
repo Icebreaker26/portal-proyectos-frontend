@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { Users } from 'lucide-react';
 import apiService from '../../../services/apiService.js';
+import Skeleton from '../../../components/Skeleton.jsx';
+import EmptyState from '../../../components/EmptyState.jsx';
 
 // Admin-only (ver AdminRoute.jsx). El backend solo acepta 'estudiante'/'profesor' por
 // esta vía — 'admin' sigue siendo manual en BD (ver ADR 0006 en el repo backend).
@@ -37,9 +40,15 @@ export default function PanelUsuarios() {
       </p>
 
       {cargando ? (
-        <p className="mt-6 text-sm text-slate-500">Cargando…</p>
+        <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
+          </div>
+        </div>
       ) : usuarios.length === 0 ? (
-        <p className="mt-6 text-sm text-slate-500">No hay usuarios.</p>
+        <EmptyState icon={Users} titulo="No hay usuarios." />
       ) : (
         <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
