@@ -1,8 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, AlertTriangle, FolderOpen, Search } from 'lucide-react';
 import apiService from '../../../services/apiService.js';
 import EstadoBadge from '../components/EstadoBadge.jsx';
+import Skeleton from '../../../components/Skeleton.jsx';
+import EmptyState from '../../../components/EmptyState.jsx';
+
+const selectClase =
+  'rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-ucp-verde focus:outline-none focus:ring-1 focus:ring-ucp-verde';
 
 // GET /api/proyectos (autenticado): visibilidad por rol — ver ADR correspondiente en el
 // backend (RF-04 del SRS). Quien puede aprobar ve todos; el resto ve lo suyo + lo aprobado
@@ -14,6 +19,8 @@ import EstadoBadge from '../components/EstadoBadge.jsx';
 export default function ListadoProyectos() {
   const [proyectos, setProyectos] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [busqueda, setBusqueda] = useState('');
+  const [estadoFiltro, setEstadoFiltro] = useState('');
 
   useEffect(() => {
     apiService
@@ -22,12 +29,30 @@ export default function ListadoProyectos() {
       .finally(() => setCargando(false));
   }, []);
 
+  // Filtro en el cliente (issue #34), mismo criterio que ListadoPublico.jsx: GET /api/proyectos
+  // no pagina ni filtra, y filtrar sobre los datos ya traídos no justifica tocar el backend.
+  const proyectosFiltrados = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    return proyectos.filter((p) => {
+      if (estadoFiltro && p.estado !== estadoFiltro) return false;
+      if (!q) return true;
+      const texto = [p.titulo, p.resumen, p.descripcion].filter(Boolean).join(' ').toLowerCase();
+      return texto.includes(q);
+    });
+  }, [proyectos, busqueda, estadoFiltro]);
+  const hayFiltrosActivos = Boolean(busqueda || estadoFiltro);
+
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">Proyectos</h1>
-          <p className="mt-1 text-sm text-slate-500">Tus proyectos y los ya aprobados de otros.</p>
+          <h1 className="text-xl font-semibold text-slate-800">Mis proyectos</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Tus proyectos (en cualquier estado) y los ya aprobados de otros. ¿Buscas la{' '}
+            <Link to="/proyectos/pub" className="font-medium text-ucp-verde hover:underline">
+              vitrina pública
+            </Link>?
+          </p>
         </div>
         <Link
           to="/proyectos/nuevo"
@@ -37,12 +62,42 @@ export default function ListadoProyectos() {
         </Link>
       </div>
 
+      {!cargando && proyectos.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <div className="relative min-w-[200px] flex-1">
+            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar por título o resumen…"
+              className="w-full rounded-lg border border-slate-200 py-2 pl-8 pr-3 text-sm text-slate-800 focus:border-ucp-verde focus:outline-none focus:ring-1 focus:ring-ucp-verde"
+            />
+          </div>
+          <select value={estadoFiltro} onChange={(e) => setEstadoFiltro(e.target.value)} className={selectClase}>
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="aprobado">Aprobado</option>
+            <option value="rechazado">Rechazado</option>
+          </select>
+        </div>
+      )}
+
       {cargando ? (
-        <p className="mt-6 text-sm text-slate-500">Cargando…</p>
+        <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        </div>
       ) : proyectos.length === 0 ? (
-        <p className="mt-6 text-sm text-slate-500">Todavía no hay proyectos.</p>
+        <EmptyState icon={FolderOpen} titulo="Todavía no hay proyectos." />
+      ) : proyectosFiltrados.length === 0 ? (
+        <EmptyState icon={Search} titulo="Sin resultados para ese filtro.">
+          {hayFiltrosActivos && 'Prueba con otro término o quita algún filtro.'}
+        </EmptyState>
       ) : (
-        <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left">
               <thead className="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500">
@@ -54,19 +109,27 @@ export default function ListadoProyectos() {
                 </tr>
               </thead>
               <tbody>
-                {proyectos.map((p) => (
-                  <tr key={p.id} className="border-t border-slate-100 hover:bg-slate-50">
+                {proyectosFiltrados.map((p) => (
+                  <tr
+                    key={p.id}
+                    className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${p.requiere_mi_consentimiento ? 'bg-ucp-dorado/5 hover:bg-ucp-dorado/10' : ''}`}
+                  >
                     <td className="px-4 py-3 text-sm font-medium">
                       <Link to={`/proyectos/${p.id}`} className="text-slate-800 hover:text-ucp-verde hover:underline">
                         {p.titulo}
                       </Link>
+                      {p.requiere_mi_consentimiento && (
+                        <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-ucp-dorado/10 px-2 py-0.5 text-[11px] font-normal text-ucp-dorado">
+                          <AlertTriangle size={11} /> Requiere tu consentimiento
+                        </span>
+                      )}
                       {(p.programa || p.tipo_proyecto) && (
                         <p className="mt-0.5 text-xs font-normal text-slate-400">
                           {[p.programa, p.tipo_proyecto].filter(Boolean).join(' · ')}
                         </p>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{p.resumen || p.descripcion}</td>
+                    <td className="max-w-xs truncate px-4 py-3 text-sm text-slate-600">{p.resumen || p.descripcion}</td>
                     <td className="px-4 py-3 text-sm">
                       <EstadoBadge estado={p.estado} />
                     </td>

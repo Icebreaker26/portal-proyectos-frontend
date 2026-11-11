@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Paperclip } from 'lucide-react';
+import { Paperclip, FileText, FileImage } from 'lucide-react';
 import toast from 'react-hot-toast';
 import apiService from '../../../services/apiService.js';
 
 const MAX_BYTES = 10 * 1024 * 1024;
+
+// Solo PDF/PNG/JPEG/WEBP llegan hasta aquí (el backend los rechaza antes, ver archivosController.js).
+const iconoArchivo = (nombreOriginal) => {
+  const ext = nombreOriginal.split('.').pop()?.toLowerCase();
+  if (ext === 'pdf') return FileText;
+  if (['png', 'jpg', 'jpeg', 'webp'].includes(ext)) return FileImage;
+  return Paperclip;
+};
 
 // Sube PDF/imágenes a un proyecto ya creado (POST /:id/archivos exige que el proyecto
 // exista -- ver archivosController.js en el backend). Se usa después de crear el
@@ -57,13 +65,16 @@ export default function ArchivosProyecto({ proyectoId }) {
 
       {archivos.length > 0 && (
         <ul className="mt-3 space-y-1">
-          {archivos.map((a) => (
-            <li key={a.id} className="flex items-center gap-2 text-sm text-slate-600">
-              <Paperclip size={14} className="text-slate-400" />
-              {a.nombre_original}
-              <span className="text-xs text-slate-400">({Math.ceil(a.tamano_bytes / 1024)} KB)</span>
-            </li>
-          ))}
+          {archivos.map((a) => {
+            const Icono = iconoArchivo(a.nombre_original);
+            return (
+              <li key={a.id} className="flex items-center gap-2 text-sm text-slate-600">
+                <Icono size={14} className="shrink-0 text-slate-400" />
+                <span className="truncate">{a.nombre_original}</span>
+                <span className="shrink-0 text-xs text-slate-400">({Math.ceil(a.tamano_bytes / 1024)} KB)</span>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
