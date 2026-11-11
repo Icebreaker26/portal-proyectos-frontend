@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ExternalLink, Image as ImageIcon, FolderOpen } from 'lucide-react';
 import apiService from '../../../services/apiService.js';
+import { useAuth } from '../../../context/AuthContext.jsx';
 import VotoBoton from '../../votos/components/VotoBoton.jsx';
 import Skeleton from '../../../components/Skeleton.jsx';
 import EmptyState from '../../../components/EmptyState.jsx';
@@ -10,7 +11,11 @@ import Cascada, { item } from '../../../components/Cascada.jsx';
 
 const MAX_STACK_VISIBLE = 3;
 
+// /proyectos/pub (esta vista, pública, sin sesión) vs /proyectos (ListadoProyectos.jsx,
+// autenticado, "lo propio + lo aprobado de otros") — ver issue #33: la diferencia entre ambas
+// no era obvia desde la navegación, de ahí el cross-link de abajo cuando hay sesión.
 export default function ListadoPublico() {
+  const { usuario } = useAuth();
   const [proyectos, setProyectos] = useState([]);
   const [cargando, setCargando] = useState(true);
 
@@ -23,10 +28,20 @@ export default function ListadoPublico() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold text-slate-800">Proyectos aprobados</h1>
-      <p className="mt-1 text-sm text-slate-500">
-        Proyectos de curso publicados por estudiantes y profesores de la UCP.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-800">Vitrina pública</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Proyectos de curso aprobados y publicados por estudiantes y profesores de la UCP —
+            visible para cualquier visitante, con o sin sesión.
+          </p>
+        </div>
+        {usuario && (
+          <Link to="/proyectos" className="text-sm font-medium text-ucp-verde hover:underline">
+            Ver mis proyectos →
+          </Link>
+        )}
+      </div>
 
       {cargando ? (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
