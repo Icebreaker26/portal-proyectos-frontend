@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { motion } from 'framer-motion';
 
 // Snake jugable en la 404 (issue #13). Adaptado del mismo patrón ya probado en
 // kernel-frontend (src/pages/NotFound.jsx): canvas 2D plano + hooks de React, sin
@@ -247,10 +248,15 @@ export default function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#F7F8FA] px-4 font-sans">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="flex min-h-screen flex-col items-center justify-center bg-[#F7F8FA] px-4 font-sans"
+    >
       <p className="mb-1 text-6xl font-bold text-slate-300">404</p>
       <p className="mb-8 text-xs tracking-[3px] text-slate-400">PÁGINA NO ENCONTRADA</p>
       <SnakeGame onClose={() => navigate(-1)} />
-    </div>
+    </motion.div>
   );
 }

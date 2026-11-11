@@ -9,7 +9,7 @@ export default function CuerpoMarkdown({ texto }) {
   const html = DOMPurify.sanitize(marked.parse(texto));
   return (
     <div
-      className="prose prose-sm prose-slate mt-4 max-w-none prose-a:text-ucp-verde prose-headings:text-slate-800"
+      className="prose prose-sm sm:prose-base prose-slate mt-5 max-w-none prose-headings:font-semibold prose-headings:text-slate-800 prose-a:text-ucp-verde prose-img:rounded-lg prose-img:border prose-img:border-slate-200"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
