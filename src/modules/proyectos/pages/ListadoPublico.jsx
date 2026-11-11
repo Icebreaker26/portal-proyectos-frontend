@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ExternalLink, Image as ImageIcon, FolderOpen, Search } from 'lucide-react';
@@ -8,6 +8,11 @@ import VotoBoton from '../../votos/components/VotoBoton.jsx';
 import Skeleton from '../../../components/Skeleton.jsx';
 import EmptyState from '../../../components/EmptyState.jsx';
 import Cascada, { item } from '../../../components/Cascada.jsx';
+import FallbackEstatico from '../../../components/landing3d/FallbackEstatico.jsx';
+
+// Chunk de three.js + @react-three/fiber: igual que en Landing.jsx, debe ser lazy para no
+// meterlo en el bundle principal de rutas que no muestran esta vitrina (issue #39).
+const HeroVitrina3D = lazy(() => import('../../../components/landing3d/HeroVitrina3D.jsx'));
 
 const MAX_STACK_VISIBLE = 3;
 const selectClase =
@@ -56,19 +61,36 @@ export default function ListadoPublico() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-800">Vitrina pública</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Proyectos de curso aprobados y publicados por estudiantes y profesores de la UCP —
-            visible para cualquier visitante, con o sin sesión.
-          </p>
+      {/* Hero 3D propio de esta vista (issue #39): mismo patrón que /landing (fondo 3D
+          puramente estético detrás de una tarjeta de texto en HTML normal), pero contenido en
+          el ancho del Layout en vez de a todo el viewport, y con otra escena (EscenaInnovacion,
+          no el "portal" de landing) — íconos de ingeniería/ciencias flotando alrededor de un
+          núcleo facetado, para dar la idea de innovación de la Facultad de Ciencias Básicas e
+          Ingeniería. */}
+      <div className="relative mb-8 min-h-[18rem] overflow-hidden rounded-2xl border border-slate-200 sm:min-h-[22rem]">
+        <div className="absolute inset-0">
+          <Suspense fallback={<FallbackEstatico />}>
+            <HeroVitrina3D />
+          </Suspense>
         </div>
-        {usuario && (
-          <Link to="/proyectos" className="text-sm font-medium text-ucp-verde hover:underline">
-            Ver mis proyectos →
-          </Link>
-        )}
+
+        <div className="relative z-10 flex h-full flex-col items-start justify-center gap-2 p-6 sm:p-10">
+          <div className="max-w-xl rounded-2xl bg-white/75 p-5 shadow-sm backdrop-blur-sm sm:p-7">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ucp-granate">Vitrina pública</p>
+            <h1 className="mt-1 text-2xl font-semibold text-slate-800 sm:text-3xl">
+              La innovación de la Facultad de Ciencias Básicas e Ingeniería, en marcha
+            </h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Explora los proyectos de estudiantes y profesores de la UCP, aprobados y listos para
+              inspirar — abierto a cualquier visitante, con o sin sesión.
+            </p>
+            {usuario && (
+              <Link to="/proyectos" className="mt-3 inline-block text-sm font-medium text-ucp-verde hover:underline">
+                Ver mis proyectos →
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
 
       {!cargando && proyectos.length > 0 && (
