@@ -26,10 +26,15 @@ export default function ListadoProyectos() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-slate-800">Proyectos</h1>
-          <p className="mt-1 text-sm text-slate-500">Tus proyectos y los ya aprobados de otros.</p>
+          <h1 className="text-xl font-semibold text-slate-800">Mis proyectos</h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Tus proyectos (en cualquier estado) y los ya aprobados de otros. ¿Buscas la{' '}
+            <Link to="/proyectos/pub" className="font-medium text-ucp-verde hover:underline">
+              vitrina pública
+            </Link>?
+          </p>
         </div>
         <Link
           to="/proyectos/nuevo"

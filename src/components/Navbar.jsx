@@ -19,8 +19,13 @@ const EnlacesNav = ({ onNavigate }) => {
   return (
     <>
       <NavLink to="/proyectos/pub" className={linkClase} onClick={onNavigate}>
-        Proyectos
+        Vitrina pública
       </NavLink>
+      {usuario && (
+        <NavLink to="/proyectos" end className={linkClase} onClick={onNavigate}>
+          Mis proyectos
+        </NavLink>
+      )}
       {usuario && (
         <NavLink to="/proyectos/nuevo" className={linkClase} onClick={onNavigate}>
           Nuevo proyecto
