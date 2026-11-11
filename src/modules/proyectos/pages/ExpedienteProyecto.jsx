@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ExternalLink, ArrowLeft, Paperclip, PlayCircle, Check, X } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ExternalLink, ArrowLeft, Paperclip, PlayCircle, Check, X, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import apiService from '../../../services/apiService.js';
 import { useAuth } from '../../../context/AuthContext.jsx';
@@ -32,6 +32,7 @@ const idYoutube = (url) => {
 // expediente completo antes de decidir, no hacerlo desde una fila de tabla.
 export default function ExpedienteProyecto() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { usuario } = useAuth();
   const [proyecto, setProyecto] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -40,6 +41,8 @@ export default function ExpedienteProyecto() {
   const [rechazando, setRechazando] = useState(false);
   const [comentario, setComentario] = useState('');
   const [confirmandoConsentimiento, setConfirmandoConsentimiento] = useState(false);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
 
   const cargar = () => {
     setCargando(true);
@@ -59,6 +62,12 @@ export default function ExpedienteProyecto() {
   // (`uuid`) — AuthContext no normaliza el nombre del campo entre ambos casos, así que hay que
   // aceptar los dos para que la comparación funcione también después de recargar la página.
   const miUuid = usuario?.id ?? usuario?.uuid;
+  const esAutor = proyecto?.autor_uuid === miUuid;
+  // El backend (checkPermission) no valida "autor" para proyectos:DELETE, solo módulo+acción —
+  // por defecto solo profesor/admin tienen esa acción (ver permisosDefaultService.js del backend).
+  // Un autor estudiante puede ver este botón pero recibir 403 del backend al usarlo; se maneja
+  // con un mensaje claro en vez de ocultar el botón, para no silenciar ese caso sin avisar.
+  const puedeEliminar = esAutor || usuario?.rol === 'profesor' || usuario?.rol === 'admin';
 
   // Issue #18 — fuera de alcance a propósito: retirar el consentimiento (consiente: false) una
   // vez confirmado. El endpoint lo permite, pero no hay un caso de uso claro para deshacerlo desde
@@ -89,6 +98,18 @@ export default function ExpedienteProyecto() {
       toast.error(err.response?.data?.error || 'No se pudo actualizar el proyecto');
     } finally {
       setActualizando(false);
+    }
+  };
+
+  const eliminarProyecto = async () => {
+    setEliminando(true);
+    try {
+      await apiService.delete(`/proyectos/${id}`);
+      toast.success('Proyecto eliminado');
+      navigate('/proyectos');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'No se pudo eliminar el proyecto');
+      setEliminando(false);
     }
   };
 
@@ -291,6 +312,44 @@ export default function ExpedienteProyecto() {
                       <X size={16} /> Rechazar
                     </button>
                   </div>
+                )}
+              </div>
+            )}
+
+            {puedeEliminar && (
+              <div className="mt-6 border-t border-slate-100 pt-4">
+                <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">Zona de peligro</h2>
+                {confirmandoEliminar ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <p className="text-sm text-slate-600">
+                      ¿Eliminar este proyecto? No podrás deshacerlo desde aquí.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={eliminando}
+                        onClick={eliminarProyecto}
+                        className="inline-flex items-center gap-1 rounded-lg bg-ucp-rojo px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-ucp-rojo/90 disabled:opacity-60"
+                      >
+                        <Trash2 size={16} /> {eliminando ? 'Eliminando…' : 'Confirmar eliminación'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmandoEliminar(false)}
+                        className="rounded-lg px-4 py-2 text-sm text-slate-500 hover:bg-slate-100"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmandoEliminar(true)}
+                    className="mt-2 inline-flex items-center gap-1 rounded-lg border border-ucp-rojo/30 px-4 py-2 text-sm font-medium text-ucp-rojo transition-colors hover:bg-ucp-rojo/10"
+                  >
+                    <Trash2 size={16} /> Eliminar proyecto
+                  </button>
                 )}
               </div>
             )}
