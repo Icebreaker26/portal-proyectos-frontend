@@ -1,6 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ExternalLink, ArrowLeft, Paperclip, PlayCircle, Check, X, Trash2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  ExternalLink,
+  ArrowLeft,
+  PlayCircle,
+  Check,
+  X,
+  Trash2,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  FileText,
+  FileArchive,
+  FileImage,
+  FileVideo,
+  FileSpreadsheet,
+  File as FileIcon,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import apiService from '../../../services/apiService.js';
 import { useAuth } from '../../../context/AuthContext.jsx';
@@ -8,11 +25,19 @@ import VotoBoton from '../../votos/components/VotoBoton.jsx';
 import CuerpoMarkdown from '../components/CuerpoMarkdown.jsx';
 import EstadoBadge from '../components/EstadoBadge.jsx';
 import Skeleton from '../../../components/Skeleton.jsx';
+import { entrada } from '../../../components/Cascada.jsx';
 
 const formatoFecha = (iso) =>
   new Date(iso).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
 
 const ROLES = { lider: 'Líder', desarrollo: 'Desarrollo', diseno: 'Diseño', investigacion: 'Investigación' };
+
+const ICONOS_REVISION = { aprobado: CheckCircle2, rechazado: XCircle, pendiente: Clock };
+const COLORES_REVISION = {
+  aprobado: 'bg-ucp-verde/10 text-ucp-verde',
+  rechazado: 'bg-ucp-rojo/10 text-ucp-rojo',
+  pendiente: 'bg-ucp-dorado/10 text-ucp-dorado',
+};
 
 const idYoutube = (url) => {
   try {
@@ -24,6 +49,19 @@ const idYoutube = (url) => {
     return null;
   }
 };
+
+// Ícono por tipo de archivo (solo visual) — mismo criterio que DetalleProyecto.jsx.
+const iconoArchivo = (nombreOriginal) => {
+  const ext = nombreOriginal.split('.').pop()?.toLowerCase();
+  if (['doc', 'docx', 'odt', 'pdf', 'txt'].includes(ext)) return FileText;
+  if (['xls', 'xlsx', 'csv', 'ods'].includes(ext)) return FileSpreadsheet;
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return FileArchive;
+  if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) return FileImage;
+  if (['mp4', 'mov', 'avi', 'webm', 'mkv'].includes(ext)) return FileVideo;
+  return FileIcon;
+};
+
+const inicial = (nombre) => (nombre || '?').trim().charAt(0).toUpperCase();
 
 // Expediente autenticado de un proyecto (GET /api/proyectos/:id): a diferencia de
 // DetalleProyecto.jsx (público, solo aprobado+publico), este trae cualquier proyecto al
@@ -134,7 +172,7 @@ export default function ExpedienteProyecto() {
       ) : noEncontrado ? (
         <p className="mt-6 text-sm text-slate-500">Este proyecto no existe o no tienes acceso a él.</p>
       ) : (
-        <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <motion.div {...entrada} className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           {proyecto.imagen_portada_url && (
             <img src={proyecto.imagen_portada_url} alt="" className="h-56 w-full object-cover" />
           )}
@@ -172,32 +210,38 @@ export default function ExpedienteProyecto() {
             {proyecto.participantes?.length > 0 && (
               <div className="mt-5 border-t border-slate-100 pt-4">
                 <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">Participantes</h2>
-                <ul className="mt-2 space-y-1">
-                  {proyecto.participantes.map((p, i) => (
-                    <li key={i} className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                      <span>
-                        {p.nombre_cuenta || p.nombre_libre}
-                        <span className="text-slate-400"> — {ROLES[p.rol] || p.rol}</span>
-                      </span>
-                      {p.usuario_uuid && !p.consiente_publicacion && (
-                        <>
-                          <span className="rounded-full bg-ucp-dorado/10 px-2 py-0.5 text-[11px] text-ucp-dorado">
-                            Sin consentir
-                          </span>
-                          {p.usuario_uuid === miUuid && (
-                            <button
-                              type="button"
-                              disabled={confirmandoConsentimiento}
-                              onClick={confirmarConsentimiento}
-                              className="rounded-full bg-ucp-verde/10 px-2 py-0.5 text-[11px] font-medium text-ucp-verde hover:bg-ucp-verde/20 disabled:opacity-60"
-                            >
-                              {confirmandoConsentimiento ? 'Confirmando…' : 'Confirmar mi consentimiento'}
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </li>
-                  ))}
+                <ul className="mt-3 space-y-2">
+                  {proyecto.participantes.map((p, i) => {
+                    const nombre = p.nombre_cuenta || p.nombre_libre;
+                    return (
+                      <li key={i} className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-500">
+                          {inicial(nombre)}
+                        </span>
+                        <span>
+                          {nombre}
+                          <span className="text-slate-400"> — {ROLES[p.rol] || p.rol}</span>
+                        </span>
+                        {p.usuario_uuid && !p.consiente_publicacion && (
+                          <>
+                            <span className="rounded-full bg-ucp-dorado/10 px-2 py-0.5 text-[11px] text-ucp-dorado">
+                              Sin consentir
+                            </span>
+                            {p.usuario_uuid === miUuid && (
+                              <button
+                                type="button"
+                                disabled={confirmandoConsentimiento}
+                                onClick={confirmarConsentimiento}
+                                className="rounded-full bg-ucp-verde/10 px-2 py-0.5 text-[11px] font-medium text-ucp-verde hover:bg-ucp-verde/20 disabled:opacity-60"
+                              >
+                                {confirmandoConsentimiento ? 'Confirmando…' : 'Confirmar mi consentimiento'}
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -229,19 +273,23 @@ export default function ExpedienteProyecto() {
             {proyecto.archivos?.length > 0 && (
               <div className="mt-5 border-t border-slate-100 pt-4">
                 <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">Archivos</h2>
-                <ul className="mt-2 space-y-1">
-                  {proyecto.archivos.map((a) => (
-                    <li key={a.id}>
-                      <a
-                        href={`${import.meta.env.VITE_API_BASE_URL}/proyectos/archivos/${a.id}/descargar`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-sm text-ucp-verde hover:underline"
-                      >
-                        <Paperclip size={14} /> {a.nombre_original}
-                      </a>
-                    </li>
-                  ))}
+                <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {proyecto.archivos.map((a) => {
+                    const Icono = iconoArchivo(a.nombre_original);
+                    return (
+                      <li key={a.id}>
+                        <a
+                          href={`${import.meta.env.VITE_API_BASE_URL}/proyectos/archivos/${a.id}/descargar`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition-colors hover:border-ucp-verde/40 hover:bg-ucp-verde/5 hover:text-ucp-verde"
+                        >
+                          <Icono size={16} className="shrink-0 text-slate-400" />
+                          <span className="truncate">{a.nombre_original}</span>
+                        </a>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -249,14 +297,22 @@ export default function ExpedienteProyecto() {
             {proyecto.revisiones?.length > 0 && (
               <div className="mt-5 border-t border-slate-100 pt-4">
                 <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">Historial de revisión</h2>
-                <ul className="mt-2 space-y-2">
-                  {proyecto.revisiones.map((r, i) => (
-                    <li key={i} className="text-sm text-slate-600">
-                      <span className="font-medium text-slate-700">{r.estado_nuevo}</span>
-                      {r.revisor_nombre && <> por {r.revisor_nombre}</>} · {formatoFecha(r.created_at)}
-                      {r.comentario && <p className="mt-0.5 text-slate-500">"{r.comentario}"</p>}
-                    </li>
-                  ))}
+                <ul className="relative mt-3 space-y-4 border-l border-slate-200 pl-5">
+                  {proyecto.revisiones.map((r, i) => {
+                    const Icono = ICONOS_REVISION[r.estado_nuevo] || Clock;
+                    return (
+                      <li key={i} className="relative text-sm text-slate-600">
+                        <span
+                          className={`absolute -left-[1.68rem] flex h-6 w-6 items-center justify-center rounded-full ${COLORES_REVISION[r.estado_nuevo] || 'bg-slate-100 text-slate-500'}`}
+                        >
+                          <Icono size={13} />
+                        </span>
+                        <span className="font-medium capitalize text-slate-700">{r.estado_nuevo}</span>
+                        {r.revisor_nombre && <> por {r.revisor_nombre}</>} · {formatoFecha(r.created_at)}
+                        {r.comentario && <p className="mt-0.5 text-slate-500">"{r.comentario}"</p>}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -364,7 +420,7 @@ export default function ExpedienteProyecto() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

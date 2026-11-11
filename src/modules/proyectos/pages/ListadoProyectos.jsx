@@ -43,7 +43,7 @@ export default function ListadoProyectos() {
         <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-8 w-full" />
+              <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
         </div>
@@ -65,7 +65,7 @@ export default function ListadoProyectos() {
                 {proyectos.map((p) => (
                   <tr
                     key={p.id}
-                    className={`border-t border-slate-100 hover:bg-slate-50 ${p.requiere_mi_consentimiento ? 'bg-ucp-dorado/5' : ''}`}
+                    className={`border-t border-slate-100 transition-colors hover:bg-slate-50 ${p.requiere_mi_consentimiento ? 'bg-ucp-dorado/5 hover:bg-ucp-dorado/10' : ''}`}
                   >
                     <td className="px-4 py-3 text-sm font-medium">
                       <Link to={`/proyectos/${p.id}`} className="text-slate-800 hover:text-ucp-verde hover:underline">
@@ -82,7 +82,7 @@ export default function ListadoProyectos() {
                         </p>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{p.resumen || p.descripcion}</td>
+                    <td className="max-w-xs truncate px-4 py-3 text-sm text-slate-600">{p.resumen || p.descripcion}</td>
                     <td className="px-4 py-3 text-sm">
                       <EstadoBadge estado={p.estado} />
                     </td>
