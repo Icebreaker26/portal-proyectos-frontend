@@ -1,10 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, AlertTriangle, FolderOpen, Search } from 'lucide-react';
+import { ExternalLink, AlertTriangle, FolderOpen, Lock, Search } from 'lucide-react';
 import apiService from '../../../services/apiService.js';
 import EstadoBadge from '../components/EstadoBadge.jsx';
 import Skeleton from '../../../components/Skeleton.jsx';
 import EmptyState from '../../../components/EmptyState.jsx';
+import FallbackEstatico from '../../../components/landing3d/FallbackEstatico.jsx';
+
+// Mismo hero 3D que ListadoPublico.jsx (issue #39): un dashboard privado justo después de la
+// vitrina pública no debería sentirse como un salto hacia atrás en identidad visual. Se reutiliza
+// la escena (EscenaInnovacion) — es el mismo laboratorio de la facultad, solo que aquí la tarjeta
+// de texto deja explícito que esta vista es privada (ver eyebrow con el ícono de candado abajo).
+const HeroVitrina3D = lazy(() => import('../../../components/landing3d/HeroVitrina3D.jsx'));
 
 const selectClase =
   'rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-ucp-verde focus:outline-none focus:ring-1 focus:ring-ucp-verde';
@@ -44,22 +51,38 @@ export default function ListadoProyectos() {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-800">Mis proyectos</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Tus proyectos (en cualquier estado) y los ya aprobados de otros. ¿Buscas la{' '}
-            <Link to="/proyectos/pub" className="font-medium text-ucp-verde hover:underline">
-              vitrina pública
-            </Link>?
-          </p>
+      {/* Hero 3D (issue #39, reutilizado aquí): misma escena que la vitrina pública, pero la
+          tarjeta deja explícito que esta vista es privada (candado + "solo para ti"). */}
+      <div className="relative mb-8 min-h-[18rem] overflow-hidden rounded-2xl border border-slate-200 sm:min-h-[22rem]">
+        <div className="absolute inset-0">
+          <Suspense fallback={<FallbackEstatico />}>
+            <HeroVitrina3D />
+          </Suspense>
         </div>
-        <Link
-          to="/proyectos/nuevo"
-          className="rounded-lg bg-ucp-verde px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-ucp-verde/90"
-        >
-          Nuevo proyecto
-        </Link>
+
+        <div className="relative z-10 flex h-full flex-col items-start justify-center gap-2 p-6 sm:p-10">
+          <div className="max-w-xl rounded-2xl bg-white/75 p-5 shadow-sm backdrop-blur-sm sm:p-7">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ucp-granate">
+              <Lock size={12} /> Mis proyectos · vista privada
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold text-slate-800 sm:text-3xl">
+              Tu rincón en la innovación de la Facultad de Ciencias Básicas e Ingeniería
+            </h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Tus proyectos en cualquier estado y los ya aprobados de otros — visible solo para ti,
+              con tu sesión iniciada. ¿Buscas la{' '}
+              <Link to="/proyectos/pub" className="font-medium text-ucp-verde hover:underline">
+                vitrina pública
+              </Link>?
+            </p>
+            <Link
+              to="/proyectos/nuevo"
+              className="mt-4 inline-block rounded-lg bg-ucp-verde px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-ucp-verde/90"
+            >
+              Nuevo proyecto
+            </Link>
+          </div>
+        </div>
       </div>
 
       {!cargando && proyectos.length > 0 && (
