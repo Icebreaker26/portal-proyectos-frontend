@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import AuthLayout from '../components/AuthLayout.jsx';
 
@@ -92,8 +93,9 @@ export default function Registro() {
         <button
           type="submit"
           disabled={enviando}
-          className="w-full rounded-lg bg-ucp-verde px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-ucp-verde/90 disabled:opacity-60"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ucp-verde px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-ucp-verde/90 disabled:opacity-60"
         >
+          {enviando && <Loader2 size={14} className="animate-spin" />}
           {enviando ? 'Creando…' : 'Registrarme'}
         </button>
       </form>
