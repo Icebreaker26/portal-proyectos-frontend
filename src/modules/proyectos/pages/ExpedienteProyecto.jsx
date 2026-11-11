@@ -39,6 +39,7 @@ export default function ExpedienteProyecto() {
   const [actualizando, setActualizando] = useState(false);
   const [rechazando, setRechazando] = useState(false);
   const [comentario, setComentario] = useState('');
+  const [confirmandoConsentimiento, setConfirmandoConsentimiento] = useState(false);
 
   const cargar = () => {
     setCargando(true);
@@ -54,6 +55,27 @@ export default function ExpedienteProyecto() {
 
   const puedeAprobar = usuario?.rol === 'profesor' || usuario?.rol === 'admin';
   const videoId = proyecto?.video_demo_url ? idYoutube(proyecto.video_demo_url) : null;
+  // /auth/login y /auth/registro devuelven `id`, pero /auth/me devuelve el payload del JWT
+  // (`uuid`) — AuthContext no normaliza el nombre del campo entre ambos casos, así que hay que
+  // aceptar los dos para que la comparación funcione también después de recargar la página.
+  const miUuid = usuario?.id ?? usuario?.uuid;
+
+  // Issue #18 — fuera de alcance a propósito: retirar el consentimiento (consiente: false) una
+  // vez confirmado. El endpoint lo permite, pero no hay un caso de uso claro para deshacerlo desde
+  // la UI (el participante ya aceptó que su nombre figure en el proyecto); si surge, es un issue
+  // nuevo, no un olvido de este.
+  const confirmarConsentimiento = async () => {
+    setConfirmandoConsentimiento(true);
+    try {
+      await apiService.put(`/proyectos/${id}/consentimiento`, { consiente: true });
+      toast.success('Consentimiento confirmado');
+      cargar();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'No se pudo confirmar el consentimiento');
+    } finally {
+      setConfirmandoConsentimiento(false);
+    }
+  };
 
   const cambiarEstado = async (estado, comentarioEnvio) => {
     setActualizando(true);
@@ -121,13 +143,27 @@ export default function ExpedienteProyecto() {
                 <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">Participantes</h2>
                 <ul className="mt-2 space-y-1">
                   {proyecto.participantes.map((p, i) => (
-                    <li key={i} className="text-sm text-slate-600">
-                      {p.nombre_cuenta || p.nombre_libre}
-                      <span className="text-slate-400"> — {ROLES[p.rol] || p.rol}</span>
+                    <li key={i} className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                      <span>
+                        {p.nombre_cuenta || p.nombre_libre}
+                        <span className="text-slate-400"> — {ROLES[p.rol] || p.rol}</span>
+                      </span>
                       {p.usuario_uuid && !p.consiente_publicacion && (
-                        <span className="ml-2 rounded-full bg-ucp-dorado/10 px-2 py-0.5 text-[11px] text-ucp-dorado">
-                          Sin consentir
-                        </span>
+                        <>
+                          <span className="rounded-full bg-ucp-dorado/10 px-2 py-0.5 text-[11px] text-ucp-dorado">
+                            Sin consentir
+                          </span>
+                          {p.usuario_uuid === miUuid && (
+                            <button
+                              type="button"
+                              disabled={confirmandoConsentimiento}
+                              onClick={confirmarConsentimiento}
+                              className="rounded-full bg-ucp-verde/10 px-2 py-0.5 text-[11px] font-medium text-ucp-verde hover:bg-ucp-verde/20 disabled:opacity-60"
+                            >
+                              {confirmandoConsentimiento ? 'Confirmando…' : 'Confirmar mi consentimiento'}
+                            </button>
+                          )}
+                        </>
                       )}
                     </li>
                   ))}
