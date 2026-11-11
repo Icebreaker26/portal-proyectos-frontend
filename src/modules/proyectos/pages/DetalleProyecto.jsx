@@ -1,11 +1,24 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ExternalLink, ArrowLeft, Paperclip, Lock, PlayCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  ExternalLink,
+  ArrowLeft,
+  Lock,
+  PlayCircle,
+  FileText,
+  FileArchive,
+  FileImage,
+  FileVideo,
+  FileSpreadsheet,
+  File as FileIcon,
+} from 'lucide-react';
 import apiService from '../../../services/apiService.js';
 import { useAuth } from '../../../context/AuthContext.jsx';
 import VotoBoton from '../../votos/components/VotoBoton.jsx';
 import CuerpoMarkdown from '../components/CuerpoMarkdown.jsx';
 import Skeleton from '../../../components/Skeleton.jsx';
+import { entrada } from '../../../components/Cascada.jsx';
 
 const formatoFecha = (iso) =>
   new Date(iso).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -21,6 +34,18 @@ const idYoutube = (url) => {
   } catch {
     return null;
   }
+};
+
+// Ícono por tipo de archivo (solo visual, el backend no clasifica extensiones) — galería de
+// descargas más legible que un Paperclip genérico para todo.
+const iconoArchivo = (nombreOriginal) => {
+  const ext = nombreOriginal.split('.').pop()?.toLowerCase();
+  if (['doc', 'docx', 'odt', 'pdf', 'txt'].includes(ext)) return FileText;
+  if (['xls', 'xlsx', 'csv', 'ods'].includes(ext)) return FileSpreadsheet;
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return FileArchive;
+  if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) return FileImage;
+  if (['mp4', 'mov', 'avi', 'webm', 'mkv'].includes(ext)) return FileVideo;
+  return FileIcon;
 };
 
 // Actualiza <title> y las meta Open Graph para que compartir el link en redes muestre
@@ -72,7 +97,7 @@ export default function DetalleProyecto() {
 
       {cargando ? (
         <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <Skeleton className="h-56 w-full rounded-none" />
+          <Skeleton className="aspect-video w-full rounded-none" />
           <div className="flex flex-col gap-3 p-6">
             <Skeleton className="h-5 w-2/3" />
             <Skeleton className="h-3 w-1/2" />
@@ -84,13 +109,17 @@ export default function DetalleProyecto() {
       ) : noEncontrado ? (
         <p className="mt-6 text-sm text-slate-500">Este proyecto no existe o todavía no está aprobado.</p>
       ) : (
-        <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          {proyecto.imagen_portada_url && (
-            <img src={proyecto.imagen_portada_url} alt="" className="h-56 w-full object-cover" />
+        <motion.div {...entrada} className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          {proyecto.imagen_portada_url ? (
+            <img src={proyecto.imagen_portada_url} alt="" className="aspect-video w-full object-cover" />
+          ) : (
+            <div className="flex aspect-video w-full items-center justify-center bg-slate-50 text-slate-300">
+              <FileImage size={32} />
+            </div>
           )}
 
           <div className="p-6">
-            <h1 className="text-xl font-semibold text-slate-800">{proyecto.titulo}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-800">{proyecto.titulo}</h1>
             <p className="mt-1 text-sm text-slate-500">
               Por {proyecto.autor_nombre}
               {proyecto.profesor_nombre && <> · Dirigido por {proyecto.profesor_nombre}</>}
@@ -102,8 +131,12 @@ export default function DetalleProyecto() {
               </p>
             )}
 
-            {proyecto.resumen && <p className="mt-4 text-sm text-slate-700">{proyecto.resumen}</p>}
-            <p className="mt-2 whitespace-pre-line text-sm text-slate-700">{proyecto.descripcion}</p>
+            {proyecto.resumen && (
+              <p className="mt-4 border-l-2 border-ucp-verde/40 pl-3 text-base italic text-slate-600">
+                {proyecto.resumen}
+              </p>
+            )}
+            <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">{proyecto.descripcion}</p>
             <CuerpoMarkdown texto={proyecto.cuerpo} />
 
             {proyecto.stack?.length > 0 && (
@@ -133,7 +166,7 @@ export default function DetalleProyecto() {
             {videoId && (
               <div className="mt-5 border-t border-slate-100 pt-4">
                 <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">Video demo</h2>
-                <div className="mt-2 aspect-video overflow-hidden rounded-lg">
+                <div className="mt-2 aspect-video overflow-hidden rounded-xl border border-slate-200 shadow-sm">
                   <iframe
                     src={`https://www.youtube.com/embed/${videoId}`}
                     title="Video demo"
@@ -157,25 +190,32 @@ export default function DetalleProyecto() {
             {proyecto.archivos?.length > 0 && (
               <div className="mt-5 border-t border-slate-100 pt-4">
                 <h2 className="text-xs font-medium uppercase tracking-wide text-slate-500">Archivos</h2>
-                <ul className="mt-2 space-y-1">
-                  {proyecto.archivos.map((a) =>
-                    usuario ? (
+                <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {proyecto.archivos.map((a) => {
+                    const Icono = iconoArchivo(a.nombre_original);
+                    return usuario ? (
                       <li key={a.id}>
                         <a
                           href={`${import.meta.env.VITE_API_BASE_URL}/proyectos/archivos/${a.id}/descargar`}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-sm text-ucp-verde hover:underline"
+                          className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 transition-colors hover:border-ucp-verde/40 hover:bg-ucp-verde/5 hover:text-ucp-verde"
                         >
-                          <Paperclip size={14} /> {a.nombre_original}
+                          <Icono size={16} className="shrink-0 text-slate-400" />
+                          <span className="truncate">{a.nombre_original}</span>
                         </a>
                       </li>
                     ) : (
-                      <li key={a.id} className="inline-flex items-center gap-1 text-sm text-slate-400">
-                        <Lock size={14} /> {a.nombre_original} (inicia sesión para descargar)
+                      <li
+                        key={a.id}
+                        className="flex items-center gap-2 rounded-lg border border-dashed border-slate-200 px-3 py-2 text-sm text-slate-400"
+                      >
+                        <Lock size={16} className="shrink-0" />
+                        <span className="truncate">{a.nombre_original}</span>
+                        <span className="ml-auto shrink-0 text-xs">inicia sesión</span>
                       </li>
-                    ),
-                  )}
+                    );
+                  })}
                 </ul>
               </div>
             )}
@@ -204,7 +244,7 @@ export default function DetalleProyecto() {
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );
