@@ -23,6 +23,7 @@ import {
   FileCheck2,
   BookOpen,
   ExternalLink,
+  Github,
 } from 'lucide-react';
 import Footer from '../components/Footer.jsx';
 import FallbackEstatico from '../components/landing3d/FallbackEstatico.jsx';
@@ -83,6 +84,29 @@ function Referencia({ numero, titulo, fuente, href }) {
         </a>
       </div>
     </motion.li>
+  );
+}
+
+function TarjetaRepo({ titulo, descripcion, href }) {
+  return (
+    <motion.a
+      variants={item}
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="group flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-ucp-verde/40 hover:bg-ucp-verde/5"
+    >
+      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+        <Github size={16} />
+      </span>
+      <div className="min-w-0">
+        <p className="flex items-center gap-1 text-sm font-medium text-slate-800">
+          {titulo}
+          <ExternalLink size={12} className="text-slate-400 group-hover:text-ucp-verde" />
+        </p>
+        <p className="mt-1 text-xs text-slate-500">{descripcion}</p>
+      </div>
+    </motion.a>
   );
 }
 
@@ -329,6 +353,23 @@ export default function Landing() {
             titulo="Railway — Documentación oficial"
             fuente="Proveedor cloud elegido para la fase de pruebas antes del servidor institucional."
             href="https://docs.railway.com/"
+          />
+        </Cascada>
+      </Seccion>
+
+      {/* Código fuente: para que el profesor pueda revisar el código de los dos repos sin tener
+          que pedirlo aparte. */}
+      <Seccion eyebrow="Código fuente" icon={Github} titulo="Repositorios">
+        <Cascada className="grid gap-3 sm:grid-cols-2">
+          <TarjetaRepo
+            titulo="portal-proyectos-frontend"
+            descripcion="React 18 + Vite — esta misma interfaz (landing, vitrina pública, dashboard)."
+            href="https://github.com/Icebreaker26/portal-proyectos-frontend"
+          />
+          <TarjetaRepo
+            titulo="portal-proyectos-backend"
+            descripcion="API REST en Node + Express (ESM) — auth, permisos, proyectos, votos, migraciones."
+            href="https://github.com/Icebreaker26/portal-proyectos-backend"
           />
         </Cascada>
       </Seccion>
