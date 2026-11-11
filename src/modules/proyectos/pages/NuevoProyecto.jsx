@@ -1,13 +1,34 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { Search } from 'lucide-react';
+import { Search, FileText, GraduationCap, Layers, Link2, UserPlus, Users, ImageOff } from 'lucide-react';
 import apiService from '../../../services/apiService.js';
 import TagInput from '../components/TagInput.jsx';
 import ArchivosProyecto from '../components/ArchivosProyecto.jsx';
+import { entrada } from '../../../components/Cascada.jsx';
 
 const inputClase =
   'mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-ucp-verde focus:outline-none focus:ring-1 focus:ring-ucp-verde';
+
+// Agrupa cada bloque conceptual del formulario (ver issue #21) con encabezado propio — a
+// propósito no es un wizard de varios pasos: sigue siendo un solo scroll y un solo onSubmit a
+// POST /api/proyectos, solo con mejor jerarquía visual.
+function SeccionForm({ icon: Icon, titulo, children }) {
+  return (
+    <motion.section {...entrada} className="space-y-4 border-t border-slate-100 pt-5 first:border-t-0 first:pt-0">
+      <div className="flex items-center gap-2">
+        <Icon size={16} className="text-ucp-granate" />
+        <h2 className="text-sm font-semibold text-slate-700">{titulo}</h2>
+      </div>
+      {children}
+    </motion.section>
+  );
+}
+
+// Límites del backend (crearSchema en proyectosSchema.js) reflejados aquí solo para feedback
+// visual inmediato -- la validación real sigue viviendo en el backend.
+const LIMITES = { titulo: 200, descripcion: 5000, programa: 200, asignatura: 200, semestre: 20, cuerpo: 20000, licencia: 100 };
 
 const TIPOS_PROYECTO = [
   { value: '', label: 'Sin definir' },
@@ -52,6 +73,7 @@ export default function NuevoProyecto() {
   const [buscandoCoautor, setBuscandoCoautor] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [proyectoCreado, setProyectoCreado] = useState(null);
+  const [portadaError, setPortadaError] = useState(false);
 
   useEffect(() => {
     apiService.get('/usuarios/profesores').then(({ data }) => setProfesores(data));
@@ -167,20 +189,42 @@ export default function NuevoProyecto() {
         onSubmit={onSubmit}
         className="mt-6 space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
       >
-        <section className="space-y-4">
+        <SeccionForm icon={FileText} titulo="Contenido">
           <div>
-            <label htmlFor="titulo" className="block text-xs font-medium text-slate-600">Título</label>
-            <input id="titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} required className={inputClase} />
+            <label htmlFor="titulo" className="block text-xs font-medium text-slate-600">
+              Título <span className="text-ucp-rojo">*</span>
+              <span className="float-right font-normal text-slate-400">{titulo.length}/{LIMITES.titulo}</span>
+            </label>
+            <input
+              id="titulo"
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              required
+              maxLength={LIMITES.titulo}
+              className={inputClase}
+            />
           </div>
 
           <div>
-            <label htmlFor="descripcion" className="block text-xs font-medium text-slate-600">Descripción</label>
-            <textarea id="descripcion" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} required rows={3} className={inputClase} />
+            <label htmlFor="descripcion" className="block text-xs font-medium text-slate-600">
+              Descripción <span className="text-ucp-rojo">*</span>
+              <span className="float-right font-normal text-slate-400">{descripcion.length}/{LIMITES.descripcion}</span>
+            </label>
+            <textarea
+              id="descripcion"
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              required
+              rows={3}
+              maxLength={LIMITES.descripcion}
+              className={inputClase}
+            />
           </div>
 
           <div>
             <label htmlFor="resumen" className="block text-xs font-medium text-slate-600">
-              Resumen corto ({resumen.length}/300)
+              Resumen corto
+              <span className="float-right font-normal text-slate-400">{resumen.length}/300</span>
             </label>
             <textarea
               id="resumen"
@@ -195,51 +239,55 @@ export default function NuevoProyecto() {
           <div>
             <label htmlFor="cuerpo" className="block text-xs font-medium text-slate-600">
               Cuerpo del proyecto (Markdown, opcional)
+              <span className="float-right font-normal text-slate-400">{cuerpo.length}/{LIMITES.cuerpo}</span>
             </label>
             <textarea
               id="cuerpo"
               value={cuerpo}
               onChange={(e) => setCuerpo(e.target.value)}
               rows={6}
+              maxLength={LIMITES.cuerpo}
               placeholder="## Título&#10;Texto con **negrita**, listas, enlaces..."
               className={`${inputClase} font-mono`}
             />
           </div>
-        </section>
+        </SeccionForm>
 
-        <section className="grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-3">
-          <div>
-            <label htmlFor="programa" className="block text-xs font-medium text-slate-600">Programa</label>
-            <input id="programa" value={programa} onChange={(e) => setPrograma(e.target.value)} className={inputClase} />
+        <SeccionForm icon={GraduationCap} titulo="Datos académicos">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label htmlFor="programa" className="block text-xs font-medium text-slate-600">Programa</label>
+              <input id="programa" value={programa} onChange={(e) => setPrograma(e.target.value)} maxLength={LIMITES.programa} className={inputClase} />
+            </div>
+            <div>
+              <label htmlFor="asignatura" className="block text-xs font-medium text-slate-600">Asignatura</label>
+              <input id="asignatura" value={asignatura} onChange={(e) => setAsignatura(e.target.value)} maxLength={LIMITES.asignatura} className={inputClase} />
+            </div>
+            <div>
+              <label htmlFor="semestre" className="block text-xs font-medium text-slate-600">Semestre</label>
+              <input id="semestre" value={semestre} onChange={(e) => setSemestre(e.target.value)} placeholder="2026-1" maxLength={LIMITES.semestre} className={inputClase} />
+            </div>
+            <div>
+              <label htmlFor="tipo" className="block text-xs font-medium text-slate-600">Tipo de proyecto</label>
+              <select id="tipo" value={tipoProyecto} onChange={(e) => setTipoProyecto(e.target.value)} className={inputClase}>
+                {TIPOS_PROYECTO.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <label htmlFor="profesor" className="block text-xs font-medium text-slate-600">Profesor</label>
+              <select id="profesor" value={profesorUuid} onChange={(e) => setProfesorUuid(e.target.value)} className={inputClase}>
+                <option value="">Sin profesor asignado</option>
+                {profesores.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nombre} — {p.email}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div>
-            <label htmlFor="asignatura" className="block text-xs font-medium text-slate-600">Asignatura</label>
-            <input id="asignatura" value={asignatura} onChange={(e) => setAsignatura(e.target.value)} className={inputClase} />
-          </div>
-          <div>
-            <label htmlFor="semestre" className="block text-xs font-medium text-slate-600">Semestre</label>
-            <input id="semestre" value={semestre} onChange={(e) => setSemestre(e.target.value)} placeholder="2026-1" className={inputClase} />
-          </div>
-          <div>
-            <label htmlFor="tipo" className="block text-xs font-medium text-slate-600">Tipo de proyecto</label>
-            <select id="tipo" value={tipoProyecto} onChange={(e) => setTipoProyecto(e.target.value)} className={inputClase}>
-              {TIPOS_PROYECTO.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="profesor" className="block text-xs font-medium text-slate-600">Profesor</label>
-            <select id="profesor" value={profesorUuid} onChange={(e) => setProfesorUuid(e.target.value)} className={inputClase}>
-              <option value="">Sin profesor asignado</option>
-              {profesores.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre} — {p.email}</option>
-              ))}
-            </select>
-          </div>
-        </section>
+        </SeccionForm>
 
-        <section className="space-y-4 border-t border-slate-100 pt-4">
+        <SeccionForm icon={Layers} titulo="Tecnologías">
           <div>
             <label className="block text-xs font-medium text-slate-600">Tecnologías / stack</label>
             <TagInput value={stack} onChange={setStack} placeholder="React, Node.js… (Enter para agregar)" />
@@ -248,46 +296,73 @@ export default function NuevoProyecto() {
             <label className="block text-xs font-medium text-slate-600">Palabras clave</label>
             <TagInput value={palabrasClave} onChange={setPalabrasClave} placeholder="iot, educacion… (Enter para agregar)" />
           </div>
-        </section>
+        </SeccionForm>
 
-        <section className="grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="repositorio" className="block text-xs font-medium text-slate-600">Repositorio</label>
-            <input id="repositorio" type="url" value={repositorioUrl} onChange={(e) => setRepositorioUrl(e.target.value)} placeholder="https://github.com/usuario/proyecto" className={inputClase} />
+        <SeccionForm icon={Link2} titulo="Enlaces y visibilidad">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="repositorio" className="block text-xs font-medium text-slate-600">Repositorio</label>
+              <input id="repositorio" type="url" value={repositorioUrl} onChange={(e) => setRepositorioUrl(e.target.value)} placeholder="https://github.com/usuario/proyecto" className={inputClase} />
+            </div>
+            <div>
+              <label htmlFor="imagenPortada" className="block text-xs font-medium text-slate-600">Imagen de portada (URL)</label>
+              <input
+                id="imagenPortada"
+                type="url"
+                value={imagenPortadaUrl}
+                onChange={(e) => {
+                  setImagenPortadaUrl(e.target.value);
+                  setPortadaError(false);
+                }}
+                placeholder="https://…"
+                className={inputClase}
+              />
+              {imagenPortadaUrl && (
+                <div className="mt-2 flex h-24 w-full items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+                  {portadaError ? (
+                    <p className="flex items-center gap-1 text-xs text-slate-400">
+                      <ImageOff size={14} /> No se pudo cargar la imagen
+                    </p>
+                  ) : (
+                    <img
+                      src={imagenPortadaUrl}
+                      alt="Previsualización de portada"
+                      className="h-full w-full object-cover"
+                      onError={() => setPortadaError(true)}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+            <div>
+              <label htmlFor="videoDemo" className="block text-xs font-medium text-slate-600">Video demo (YouTube, etc.)</label>
+              <input id="videoDemo" type="url" value={videoDemoUrl} onChange={(e) => setVideoDemoUrl(e.target.value)} className={inputClase} />
+            </div>
+            <div>
+              <label htmlFor="demoUrl" className="block text-xs font-medium text-slate-600">Demo en vivo</label>
+              <input id="demoUrl" type="url" value={demoUrl} onChange={(e) => setDemoUrl(e.target.value)} className={inputClase} />
+            </div>
+            <div>
+              <label htmlFor="visibilidad" className="block text-xs font-medium text-slate-600">Visibilidad</label>
+              <select id="visibilidad" value={visibilidad} onChange={(e) => setVisibilidad(e.target.value)} className={inputClase}>
+                {VISIBILIDADES.map((v) => (
+                  <option key={v.value} value={v.value}>{v.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="licencia" className="block text-xs font-medium text-slate-600">Licencia</label>
+              <input id="licencia" value={licencia} onChange={(e) => setLicencia(e.target.value)} placeholder="MIT, CC-BY-4.0…" maxLength={LIMITES.licencia} className={inputClase} />
+            </div>
           </div>
-          <div>
-            <label htmlFor="imagenPortada" className="block text-xs font-medium text-slate-600">Imagen de portada (URL)</label>
-            <input id="imagenPortada" type="url" value={imagenPortadaUrl} onChange={(e) => setImagenPortadaUrl(e.target.value)} placeholder="https://…" className={inputClase} />
-          </div>
-          <div>
-            <label htmlFor="videoDemo" className="block text-xs font-medium text-slate-600">Video demo (YouTube, etc.)</label>
-            <input id="videoDemo" type="url" value={videoDemoUrl} onChange={(e) => setVideoDemoUrl(e.target.value)} className={inputClase} />
-          </div>
-          <div>
-            <label htmlFor="demoUrl" className="block text-xs font-medium text-slate-600">Demo en vivo</label>
-            <input id="demoUrl" type="url" value={demoUrl} onChange={(e) => setDemoUrl(e.target.value)} className={inputClase} />
-          </div>
-          <div>
-            <label htmlFor="visibilidad" className="block text-xs font-medium text-slate-600">Visibilidad</label>
-            <select id="visibilidad" value={visibilidad} onChange={(e) => setVisibilidad(e.target.value)} className={inputClase}>
-              {VISIBILIDADES.map((v) => (
-                <option key={v.value} value={v.value}>{v.label}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="licencia" className="block text-xs font-medium text-slate-600">Licencia</label>
-            <input id="licencia" value={licencia} onChange={(e) => setLicencia(e.target.value)} placeholder="MIT, CC-BY-4.0…" className={inputClase} />
-          </div>
-        </section>
+        </SeccionForm>
 
-        <section className="border-t border-slate-100 pt-4">
-          <label className="block text-xs font-medium text-slate-600">Coautor con cuenta en el portal</label>
-          <p className="mt-1 text-xs text-slate-400">
+        <SeccionForm icon={UserPlus} titulo="Coautor con cuenta en el portal">
+          <p className="-mt-2 text-xs text-slate-400">
             Busca por su email exacto (@ucp.edu.co). Deberá confirmar su consentimiento de
             publicación antes de que el proyecto pueda aprobarse.
           </p>
-          <div className="mt-2 flex gap-2">
+          <div className="flex gap-2">
             <input
               type="email"
               value={emailBusqueda}
@@ -331,20 +406,15 @@ export default function NuevoProyecto() {
               </button>
             </div>
           ))}
-        </section>
+        </SeccionForm>
 
-        <section className="border-t border-slate-100 pt-4">
-          <div className="flex items-center justify-between">
-            <label className="block text-xs font-medium text-slate-600">
-              Participantes adicionales (sin cuenta en el portal)
-            </label>
+        <SeccionForm icon={Users} titulo="Participantes sin cuenta en el portal">
+          <div className="-mt-2 flex items-center justify-between">
+            <p className="text-xs text-slate-400">Para quien no tiene cuenta propia en el portal.</p>
             <button type="button" onClick={agregarParticipante} className="text-xs font-medium text-ucp-verde hover:underline">
               + Agregar
             </button>
           </div>
-          <p className="mt-1 text-xs text-slate-400">
-            Para quien no tiene cuenta propia en el portal.
-          </p>
 
           {participantes.map((p, i) => (
             <div key={i} className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 p-2">
@@ -369,7 +439,7 @@ export default function NuevoProyecto() {
               </button>
             </div>
           ))}
-        </section>
+        </SeccionForm>
 
         <div className="flex items-center justify-between border-t border-slate-100 pt-4">
           <Link to="/proyectos" className="text-sm text-slate-500 hover:text-slate-700">Cancelar</Link>
