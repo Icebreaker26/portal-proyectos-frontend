@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, FolderOpen } from 'lucide-react';
+import { ExternalLink, AlertTriangle, FolderOpen } from 'lucide-react';
 import apiService from '../../../services/apiService.js';
 import EstadoBadge from '../components/EstadoBadge.jsx';
 import Skeleton from '../../../components/Skeleton.jsx';
@@ -63,11 +63,19 @@ export default function ListadoProyectos() {
               </thead>
               <tbody>
                 {proyectos.map((p) => (
-                  <tr key={p.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <tr
+                    key={p.id}
+                    className={`border-t border-slate-100 hover:bg-slate-50 ${p.requiere_mi_consentimiento ? 'bg-ucp-dorado/5' : ''}`}
+                  >
                     <td className="px-4 py-3 text-sm font-medium">
                       <Link to={`/proyectos/${p.id}`} className="text-slate-800 hover:text-ucp-verde hover:underline">
                         {p.titulo}
                       </Link>
+                      {p.requiere_mi_consentimiento && (
+                        <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-ucp-dorado/10 px-2 py-0.5 text-[11px] font-normal text-ucp-dorado">
+                          <AlertTriangle size={11} /> Requiere tu consentimiento
+                        </span>
+                      )}
                       {(p.programa || p.tipo_proyecto) && (
                         <p className="mt-0.5 text-xs font-normal text-slate-400">
                           {[p.programa, p.tipo_proyecto].filter(Boolean).join(' · ')}
