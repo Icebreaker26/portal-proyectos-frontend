@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Search } from 'lucide-react';
 import apiService from '../../../services/apiService.js';
 import TagInput from '../components/TagInput.jsx';
 import ArchivosProyecto from '../components/ArchivosProyecto.jsx';
@@ -25,10 +26,7 @@ const VISIBILIDADES = [
 const campoVacio = { nombreLibre: '', rol: 'desarrollo', aporte: '' };
 
 // Backend valida lo mismo en crearSchema (proyectosSchema.js). Campos extendidos del
-// ADR 0008. Nota de alcance (issue frontend#14): no hay selector de "profesor" ni
-// búsqueda de coautor por cuenta porque no existe un endpoint público para listar
-// profesores ni buscar usuarios -- solo admin puede listar vía /api/usuarios. Los
-// participantes adicionales se agregan como nombre_libre (sin cuenta) por ahora.
+// ADR 0008.
 export default function NuevoProyecto() {
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
@@ -47,13 +45,51 @@ export default function NuevoProyecto() {
   const [visibilidad, setVisibilidad] = useState('publico');
   const [licencia, setLicencia] = useState('');
   const [participantes, setParticipantes] = useState([]);
+  const [profesorUuid, setProfesorUuid] = useState('');
+  const [profesores, setProfesores] = useState([]);
+  const [coautoresCuenta, setCoautoresCuenta] = useState([]);
+  const [emailBusqueda, setEmailBusqueda] = useState('');
+  const [buscandoCoautor, setBuscandoCoautor] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [proyectoCreado, setProyectoCreado] = useState(null);
+
+  useEffect(() => {
+    apiService.get('/usuarios/profesores').then(({ data }) => setProfesores(data));
+  }, []);
 
   const agregarParticipante = () => setParticipantes((prev) => [...prev, { ...campoVacio }]);
   const quitarParticipante = (i) => setParticipantes((prev) => prev.filter((_, idx) => idx !== i));
   const actualizarParticipante = (i, campo, valor) =>
     setParticipantes((prev) => prev.map((p, idx) => (idx === i ? { ...p, [campo]: valor } : p)));
+
+  const quitarCoautorCuenta = (i) => setCoautoresCuenta((prev) => prev.filter((_, idx) => idx !== i));
+  const actualizarCoautorCuenta = (i, campo, valor) =>
+    setCoautoresCuenta((prev) => prev.map((c, idx) => (idx === i ? { ...c, [campo]: valor } : c)));
+
+  // Búsqueda por email EXACTO (el backend lo exige así) disparada al hacer click en "Buscar" o
+  // Enter, nunca por cada letra escrita — GET /api/usuarios/buscar tiene rate limiter propio
+  // (30/15min/IP). No es un <form> anidado: el formulario principal ya envuelve toda la página.
+  const buscarCoautor = async () => {
+    const email = emailBusqueda.trim().toLowerCase();
+    if (!email) return;
+    if (coautoresCuenta.some((c) => c.email === email)) {
+      toast.error('Ese coautor ya está en la lista');
+      return;
+    }
+    setBuscandoCoautor(true);
+    try {
+      const { data } = await apiService.get('/usuarios/buscar', { params: { email } });
+      setCoautoresCuenta((prev) => [...prev, { usuarioUuid: data.id, nombre: data.nombre, email: data.email, rol: 'desarrollo', aporte: '' }]);
+      setEmailBusqueda('');
+      toast.success(`${data.nombre} agregado como coautor`);
+    } catch (err) {
+      if (err.response?.status === 404) toast.error('No se encontró una cuenta con ese email');
+      else if (err.response?.status === 429) toast.error('Demasiados intentos — espera unos minutos e inténtalo de nuevo');
+      else toast.error(err.response?.data?.error || 'No se pudo buscar el usuario');
+    } finally {
+      setBuscandoCoautor(false);
+    }
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -67,6 +103,7 @@ export default function NuevoProyecto() {
         asignatura: asignatura || undefined,
         semestre: semestre || undefined,
         tipo_proyecto: tipoProyecto || undefined,
+        profesor_uuid: profesorUuid || undefined,
         resumen: resumen || undefined,
         imagen_portada_url: imagenPortadaUrl || undefined,
         cuerpo: cuerpo || undefined,
@@ -76,9 +113,12 @@ export default function NuevoProyecto() {
         demo_url: demoUrl || undefined,
         visibilidad,
         licencia: licencia || undefined,
-        participantes: participantes
-          .filter((p) => p.nombreLibre.trim())
-          .map((p, i) => ({ nombre_libre: p.nombreLibre.trim(), rol: p.rol, orden_autoria: i + 2, aporte: p.aporte || undefined })),
+        participantes: [
+          ...participantes
+            .filter((p) => p.nombreLibre.trim())
+            .map((p) => ({ nombre_libre: p.nombreLibre.trim(), rol: p.rol, aporte: p.aporte || undefined })),
+          ...coautoresCuenta.map((c) => ({ usuario_uuid: c.usuarioUuid, rol: c.rol, aporte: c.aporte || undefined })),
+        ].map((p, i) => ({ ...p, orden_autoria: i + 2 })),
       });
       toast.success('Proyecto enviado — queda pendiente de aprobación');
       setProyectoCreado(data);
@@ -180,11 +220,20 @@ export default function NuevoProyecto() {
             <label htmlFor="semestre" className="block text-xs font-medium text-slate-600">Semestre</label>
             <input id="semestre" value={semestre} onChange={(e) => setSemestre(e.target.value)} placeholder="2026-1" className={inputClase} />
           </div>
-          <div className="sm:col-span-3">
+          <div>
             <label htmlFor="tipo" className="block text-xs font-medium text-slate-600">Tipo de proyecto</label>
             <select id="tipo" value={tipoProyecto} onChange={(e) => setTipoProyecto(e.target.value)} className={inputClase}>
               {TIPOS_PROYECTO.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="sm:col-span-2">
+            <label htmlFor="profesor" className="block text-xs font-medium text-slate-600">Profesor</label>
+            <select id="profesor" value={profesorUuid} onChange={(e) => setProfesorUuid(e.target.value)} className={inputClase}>
+              <option value="">Sin profesor asignado</option>
+              {profesores.map((p) => (
+                <option key={p.id} value={p.id}>{p.nombre} — {p.email}</option>
               ))}
             </select>
           </div>
@@ -233,6 +282,58 @@ export default function NuevoProyecto() {
         </section>
 
         <section className="border-t border-slate-100 pt-4">
+          <label className="block text-xs font-medium text-slate-600">Coautor con cuenta en el portal</label>
+          <p className="mt-1 text-xs text-slate-400">
+            Busca por su email exacto (@ucp.edu.co). Deberá confirmar su consentimiento de
+            publicación antes de que el proyecto pueda aprobarse.
+          </p>
+          <div className="mt-2 flex gap-2">
+            <input
+              type="email"
+              value={emailBusqueda}
+              onChange={(e) => setEmailBusqueda(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  buscarCoautor();
+                }
+              }}
+              placeholder="nombre@ucp.edu.co"
+              className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-ucp-verde focus:outline-none focus:ring-1 focus:ring-ucp-verde"
+            />
+            <button
+              type="button"
+              onClick={buscarCoautor}
+              disabled={buscandoCoautor}
+              className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-60"
+            >
+              <Search size={14} /> {buscandoCoautor ? 'Buscando…' : 'Buscar'}
+            </button>
+          </div>
+
+          {coautoresCuenta.map((c, i) => (
+            <div key={c.usuarioUuid} className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 p-2">
+              <div className="min-w-[160px] flex-1 text-sm text-slate-700">
+                {c.nombre} <span className="text-xs text-slate-400">({c.email})</span>
+              </div>
+              <select
+                value={c.rol}
+                onChange={(e) => actualizarCoautorCuenta(i, 'rol', e.target.value)}
+                className="rounded border border-slate-200 px-2 py-1 text-sm"
+              >
+                <option value="lider">Líder</option>
+                <option value="desarrollo">Desarrollo</option>
+                <option value="diseno">Diseño</option>
+                <option value="investigacion">Investigación</option>
+              </select>
+              <button type="button" onClick={() => quitarCoautorCuenta(i)} className="text-xs text-ucp-rojo hover:underline">
+                Quitar
+              </button>
+            </div>
+          ))}
+        </section>
+
+        <section className="border-t border-slate-100 pt-4">
           <div className="flex items-center justify-between">
             <label className="block text-xs font-medium text-slate-600">
               Participantes adicionales (sin cuenta en el portal)
@@ -242,7 +343,7 @@ export default function NuevoProyecto() {
             </button>
           </div>
           <p className="mt-1 text-xs text-slate-400">
-            Para coautores con cuenta propia, pídeles que confirmen su participación cuando esa función esté disponible.
+            Para quien no tiene cuenta propia en el portal.
           </p>
 
           {participantes.map((p, i) => (

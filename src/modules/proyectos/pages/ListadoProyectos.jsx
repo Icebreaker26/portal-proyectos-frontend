@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, AlertTriangle } from 'lucide-react';
+import { ExternalLink, AlertTriangle, FolderOpen } from 'lucide-react';
 import apiService from '../../../services/apiService.js';
 import EstadoBadge from '../components/EstadoBadge.jsx';
+import Skeleton from '../../../components/Skeleton.jsx';
+import EmptyState from '../../../components/EmptyState.jsx';
 
 // GET /api/proyectos (autenticado): visibilidad por rol — ver ADR correspondiente en el
 // backend (RF-04 del SRS). Quien puede aprobar ve todos; el resto ve lo suyo + lo aprobado
@@ -38,9 +40,15 @@ export default function ListadoProyectos() {
       </div>
 
       {cargando ? (
-        <p className="mt-6 text-sm text-slate-500">Cargando…</p>
+        <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
+          </div>
+        </div>
       ) : proyectos.length === 0 ? (
-        <p className="mt-6 text-sm text-slate-500">Todavía no hay proyectos.</p>
+        <EmptyState icon={FolderOpen} titulo="Todavía no hay proyectos." />
       ) : (
         <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
