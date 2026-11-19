@@ -28,7 +28,28 @@ function SeccionForm({ icon: Icon, titulo, children }) {
 
 // Límites del backend (crearSchema en proyectosSchema.js) reflejados aquí solo para feedback
 // visual inmediato -- la validación real sigue viviendo en el backend.
-const LIMITES = { titulo: 200, descripcion: 5000, programa: 200, asignatura: 200, semestre: 20, cuerpo: 20000, licencia: 100 };
+const LIMITES = { titulo: 200, descripcion: 5000, asignatura: 200, cuerpo: 20000, licencia: 100, url: 500, nombreLibre: 200, aporte: 500, email: 255 };
+
+// Únicos programas que ofrece la institución hasta ahora — ampliar esta lista cuando se habiliten
+// más carreras (mantener en sync con PROGRAMAS en proyectosSchema.js).
+const PROGRAMAS = [
+  'Ingeniería de Sistemas y Telecomunicaciones',
+  'Ingeniería Industrial',
+  'Tecnología en Desarrollo de Software',
+];
+
+// Dos semestres por año, desde 2010 (no hay registros académicos antes de esa fecha) hasta el
+// semestre en curso. Generado en vez de texto libre para no admitir años inventados o formatos
+// inconsistentes ("2026-1" vs "1-2026" vs "26-1"...).
+const ANIO_MINIMO = 2010;
+const hoy = new Date();
+const anioActual = hoy.getFullYear();
+const semestreActual = hoy.getMonth() < 6 ? 1 : 2;
+const SEMESTRES = [];
+for (let anio = anioActual; anio >= ANIO_MINIMO; anio--) {
+  const maxSemestre = anio === anioActual ? semestreActual : 2;
+  for (let s = maxSemestre; s >= 1; s--) SEMESTRES.push(`${anio}-${s}`);
+}
 
 const TIPOS_PROYECTO = [
   { value: '', label: 'Sin definir' },
@@ -37,6 +58,11 @@ const TIPOS_PROYECTO = [
   { value: 'trabajo_de_grado', label: 'Trabajo de grado' },
   { value: 'otro', label: 'Otro' },
 ];
+
+// Licencias más comunes para proyectos de software/contenido académico. "Otra" deja un campo
+// libre para casos no cubiertos (el backend sigue aceptando cualquier texto de hasta 100
+// caracteres, ver proyectosSchema.js).
+const LICENCIAS = ['MIT', 'Apache-2.0', 'GPL-3.0', 'BSD-3-Clause', 'CC-BY-4.0', 'CC-BY-SA-4.0', 'Sin licencia'];
 
 const VISIBILIDADES = [
   { value: 'publico', label: 'Público — cualquier visitante lo ve aprobado' },
@@ -64,7 +90,9 @@ export default function NuevoProyecto() {
   const [videoDemoUrl, setVideoDemoUrl] = useState('');
   const [demoUrl, setDemoUrl] = useState('');
   const [visibilidad, setVisibilidad] = useState('publico');
-  const [licencia, setLicencia] = useState('');
+  const [licenciaTipo, setLicenciaTipo] = useState('');
+  const [licenciaOtra, setLicenciaOtra] = useState('');
+  const licencia = licenciaTipo === 'otra' ? licenciaOtra : licenciaTipo;
   const [participantes, setParticipantes] = useState([]);
   const [profesorUuid, setProfesorUuid] = useState('');
   const [profesores, setProfesores] = useState([]);
@@ -257,7 +285,12 @@ export default function NuevoProyecto() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>
               <label htmlFor="programa" className="block text-xs font-medium text-slate-600">Programa</label>
-              <input id="programa" value={programa} onChange={(e) => setPrograma(e.target.value)} maxLength={LIMITES.programa} className={inputClase} />
+              <select id="programa" value={programa} onChange={(e) => setPrograma(e.target.value)} className={inputClase}>
+                <option value="">Sin definir</option>
+                {PROGRAMAS.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label htmlFor="asignatura" className="block text-xs font-medium text-slate-600">Asignatura</label>
@@ -265,7 +298,12 @@ export default function NuevoProyecto() {
             </div>
             <div>
               <label htmlFor="semestre" className="block text-xs font-medium text-slate-600">Semestre</label>
-              <input id="semestre" value={semestre} onChange={(e) => setSemestre(e.target.value)} placeholder="2026-1" maxLength={LIMITES.semestre} className={inputClase} />
+              <select id="semestre" value={semestre} onChange={(e) => setSemestre(e.target.value)} className={inputClase}>
+                <option value="">Sin definir</option>
+                {SEMESTRES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label htmlFor="tipo" className="block text-xs font-medium text-slate-600">Tipo de proyecto</label>
@@ -302,7 +340,7 @@ export default function NuevoProyecto() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="repositorio" className="block text-xs font-medium text-slate-600">Repositorio</label>
-              <input id="repositorio" type="url" value={repositorioUrl} onChange={(e) => setRepositorioUrl(e.target.value)} placeholder="https://github.com/usuario/proyecto" className={inputClase} />
+              <input id="repositorio" type="url" value={repositorioUrl} onChange={(e) => setRepositorioUrl(e.target.value)} placeholder="https://github.com/usuario/proyecto" maxLength={LIMITES.url} className={inputClase} />
             </div>
             <div>
               <label htmlFor="imagenPortada" className="block text-xs font-medium text-slate-600">Imagen de portada (URL)</label>
@@ -315,6 +353,7 @@ export default function NuevoProyecto() {
                   setPortadaError(false);
                 }}
                 placeholder="https://…"
+                maxLength={LIMITES.url}
                 className={inputClase}
               />
               {imagenPortadaUrl && (
@@ -336,11 +375,11 @@ export default function NuevoProyecto() {
             </div>
             <div>
               <label htmlFor="videoDemo" className="block text-xs font-medium text-slate-600">Video demo (YouTube, etc.)</label>
-              <input id="videoDemo" type="url" value={videoDemoUrl} onChange={(e) => setVideoDemoUrl(e.target.value)} className={inputClase} />
+              <input id="videoDemo" type="url" value={videoDemoUrl} onChange={(e) => setVideoDemoUrl(e.target.value)} maxLength={LIMITES.url} className={inputClase} />
             </div>
             <div>
               <label htmlFor="demoUrl" className="block text-xs font-medium text-slate-600">Demo en vivo</label>
-              <input id="demoUrl" type="url" value={demoUrl} onChange={(e) => setDemoUrl(e.target.value)} className={inputClase} />
+              <input id="demoUrl" type="url" value={demoUrl} onChange={(e) => setDemoUrl(e.target.value)} maxLength={LIMITES.url} className={inputClase} />
             </div>
             <div>
               <label htmlFor="visibilidad" className="block text-xs font-medium text-slate-600">Visibilidad</label>
@@ -352,7 +391,22 @@ export default function NuevoProyecto() {
             </div>
             <div>
               <label htmlFor="licencia" className="block text-xs font-medium text-slate-600">Licencia</label>
-              <input id="licencia" value={licencia} onChange={(e) => setLicencia(e.target.value)} placeholder="MIT, CC-BY-4.0…" maxLength={LIMITES.licencia} className={inputClase} />
+              <select id="licencia" value={licenciaTipo} onChange={(e) => setLicenciaTipo(e.target.value)} className={inputClase}>
+                <option value="">Sin definir</option>
+                {LICENCIAS.map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+                <option value="otra">Otra…</option>
+              </select>
+              {licenciaTipo === 'otra' && (
+                <input
+                  value={licenciaOtra}
+                  onChange={(e) => setLicenciaOtra(e.target.value)}
+                  placeholder="Nombre de la licencia"
+                  maxLength={LIMITES.licencia}
+                  className={`${inputClase} mt-2`}
+                />
+              )}
             </div>
           </div>
         </SeccionForm>
@@ -374,6 +428,7 @@ export default function NuevoProyecto() {
                 }
               }}
               placeholder="nombre@ucp.edu.co"
+              maxLength={LIMITES.email}
               className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-ucp-verde focus:outline-none focus:ring-1 focus:ring-ucp-verde"
             />
             <button
@@ -420,8 +475,9 @@ export default function NuevoProyecto() {
             <div key={i} className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 p-2">
               <input
                 value={p.nombreLibre}
-                onChange={(e) => actualizarParticipante(i, 'nombreLibre', e.target.value)}
+                onChange={(e) => actualizarParticipante(i, 'nombreLibre', e.target.value.replace(/[^a-zA-ZÀ-ÖØ-öø-ÿ\s]/g, ''))}
                 placeholder="Nombre completo"
+                maxLength={LIMITES.nombreLibre}
                 className="min-w-[160px] flex-1 rounded border border-slate-200 px-2 py-1 text-sm"
               />
               <select

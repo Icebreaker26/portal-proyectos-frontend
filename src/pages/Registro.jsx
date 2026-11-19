@@ -53,8 +53,9 @@ export default function Registro() {
           <input
             id="nombre"
             value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
+            onChange={(e) => setNombre(e.target.value.replace(/[^a-zA-ZÀ-ÖØ-öø-ÿ\s]/g, ''))}
             required
+            maxLength={200}
             className={inputClase}
           />
         </div>
@@ -70,6 +71,7 @@ export default function Registro() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="correo@ucp.edu.co"
             required
+            maxLength={255}
             className={inputClase}
           />
         </div>
@@ -85,6 +87,7 @@ export default function Registro() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Mín. 8 caracteres"
             minLength={8}
+            maxLength={72}
             required
             className={inputClase}
           />

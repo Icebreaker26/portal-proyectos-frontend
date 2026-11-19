@@ -350,6 +350,7 @@ export default function ExpedienteProyecto() {
                       onChange={(e) => setComentario(e.target.value)}
                       placeholder="Motivo del rechazo…"
                       rows={3}
+                      maxLength={1000}
                       autoFocus
                       className="rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-ucp-rojo focus:outline-none focus:ring-1 focus:ring-ucp-rojo"
                     />
