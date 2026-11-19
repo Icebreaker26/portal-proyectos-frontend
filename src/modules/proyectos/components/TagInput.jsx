@@ -7,8 +7,8 @@ export default function TagInput({ value, onChange, placeholder }) {
   const [texto, setTexto] = useState('');
 
   const agregar = () => {
-    const limpio = texto.trim();
-    if (!limpio || value.includes(limpio)) {
+    const limpio = texto.trim().slice(0, 50);
+    if (!limpio || value.includes(limpio) || value.length >= 20) {
       setTexto('');
       return;
     }
@@ -41,6 +41,8 @@ export default function TagInput({ value, onChange, placeholder }) {
         onKeyDown={onKeyDown}
         onBlur={agregar}
         placeholder={value.length === 0 ? placeholder : ''}
+        maxLength={50}
+        disabled={value.length >= 20}
         className="min-w-[80px] flex-1 border-0 p-0.5 text-sm text-slate-800 focus:outline-none focus:ring-0"
       />
     </div>

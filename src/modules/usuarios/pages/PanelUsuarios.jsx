@@ -74,6 +74,7 @@ export default function PanelUsuarios() {
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar por nombre o correo…"
+            maxLength={100}
             className="w-full rounded-lg border border-slate-200 py-2 pl-8 pr-3 text-sm text-slate-800 focus:border-ucp-verde focus:outline-none focus:ring-1 focus:ring-ucp-verde"
           />
         </div>
